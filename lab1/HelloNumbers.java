@@ -5,7 +5,7 @@ public class HelloNumbers {
         while (x <= 10) {
             System.out.print(total + " ");
             total = total + x;
-            x = x + 1;
+            x =x + 1;
         }
 	}
 } 
