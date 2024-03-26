@@ -391,4 +391,7 @@ tramp
 !byow/**/*.gif
 !byow/**/*.wav
 
+# my files or floder
 .vscode/
+note.md
+TestOther.java

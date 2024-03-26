@@ -138,6 +138,7 @@ public class Model extends Observable {
      */
     public boolean tilt(Side side) {
         boolean changed = false;
+        final int BOARD_SIZE = board.size();
         final int MAX_ROW = board.size() - 1;
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
@@ -174,10 +175,10 @@ public class Model extends Observable {
 //                }
 //            }
 //        }
-        for (int col = 0; col < board.size(); col++) {
-            int[] arr = new int[board.size()];
-            int[] flags = new int[board.size()];
-            for (int row = 0; row < board.size(); row++){
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            int[] arr = new int[BOARD_SIZE];
+            int[] flags = new int[BOARD_SIZE];
+            for (int row = 0; row < BOARD_SIZE; row++){
                 if (board.tile(col, row) != null) {
                     arr[row] = board.tile(col, row).value();
                 } else {
@@ -209,17 +210,17 @@ public class Model extends Observable {
                         if( arr[current + 1] == 0){
                             current ++;
                         } else if (arr[current + 1] != arr[row] || flags[current + 1] != 0) {
-                            board.move(col, current, board.tile(col, row));
-                            changed = true;
-
-                            arr[current] = arr[row];
-                            arr[row] = 0;
+                            if (current > row) {
+                                board.move(col, current, board.tile(col, row));
+                                changed = true;
+                                arr[current] = arr[row];
+                                arr[row] = 0;
+                            }
                             break;
                         } else if (arr[current + 1] == arr[row] && flags[current + 1] == 0) {
-                            score += board.tile(col, row).value() * 2;
+                            this.score += board.tile(col, row).value() * 2;
                             board.move(col, current + 1, board.tile(col, row));
                             changed = true;
-
                             arr[current + 1] = arr[row] * 2;
                             arr[row] = 0;
                             flags[current + 1] = 1;
