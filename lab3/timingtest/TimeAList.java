@@ -30,7 +30,7 @@ public class TimeAList {
         int specialNumber = 1;
         Stopwatch stopwatch = new Stopwatch();
 
-        for (int i = 1; i <= 10000000; i++) {
+        for (int i = 1; i <= 128000; i++) {
             lst.addLast(1);
             if (i == specialNumber * 1000) {
                 double timeInSeconds = stopwatch.elapsedTime();
