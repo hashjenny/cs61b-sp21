@@ -143,7 +143,6 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         }
     }
 
-
     public boolean equals(Object o) {
         if (!(o instanceof LinkedListDeque)) {
             return false;
@@ -160,14 +159,4 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         return true;
     }
 
-    public static void main(String[] args) {
-        LinkedListDeque<Integer> lst = new LinkedListDeque<>();
-        lst.addLast(1);
-        lst.addLast(2);
-        lst.addLast(3);
-        lst.addLast(4);
-        for(var item : lst) {
-            System.out.println(item);
-        }
-    }
 }

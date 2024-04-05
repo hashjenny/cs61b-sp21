@@ -20,15 +20,15 @@ public class ArrayDequeTest {
     public void printTest() {
         ArrayDeque<Integer> arr = new ArrayDeque<>();
 
-        arr.print();
+//        arr.print();
         arr.addLast(1);
-        arr.print();
+//        arr.print();
         arr.addFirst(2);
-        arr.print();
+//        arr.print();
         arr.addFirst(3);
-        arr.print();
+//        arr.print();
         arr.addLast(4);
-        arr.print();
+//        arr.print();
         arr.printDeque();
     }
 
@@ -65,7 +65,7 @@ public class ArrayDequeTest {
         ArrayDeque<Integer> arr = new ArrayDeque<>();
         for (int i = 0; i < 100; i++) {
             arr.addFirst(1);
-            System.out.println(arr.size() + "---" +arr.arraySize());
+//            System.out.println(arr.size() + "---" +arr.arraySize());
         }
     }
 
@@ -77,7 +77,7 @@ public class ArrayDequeTest {
         }
         for (int i = 0; i < 100; i++) {
             arr.removeLast();
-            System.out.println(arr.size() + "---" +arr.arraySize());
+//            System.out.println(arr.size() + "---" +arr.arraySize());
         }
     }
 
