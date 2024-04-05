@@ -60,6 +60,27 @@ public class ArrayDequeTest {
 
     }
 
+    @Test
+    public void resizeTest1(){
+        ArrayDeque<Integer> arr = new ArrayDeque<>();
+        for (int i = 0; i < 100; i++) {
+            arr.addFirst(1);
+            System.out.println(arr.size() + "---" +arr.arraySize());
+        }
+    }
+
+    @Test
+    public void resizeTest2(){
+        ArrayDeque<Integer> arr = new ArrayDeque<>();
+        for (int i = 0; i < 100; i++) {
+            arr.addFirst(1);
+        }
+        for (int i = 0; i < 100; i++) {
+            arr.removeLast();
+            System.out.println(arr.size() + "---" +arr.arraySize());
+        }
+    }
+
 
     @Test
     public void iteratorTest() {

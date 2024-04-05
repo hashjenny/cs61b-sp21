@@ -19,10 +19,16 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @SuppressWarnings("unchecked")
     private void resize(int capacity) {
+        if (capacity < 8) {
+            capacity = 8;
+        }
         T[] newArray = (T[]) new Object[capacity];
-        for (int i = 0; i < size(); i++) {
+        int size = size();
+        for (int i = 0; i < size; i++) {
             newArray[i] = this.get(i);
         }
+        head = 0;
+        tail = size - 1;
         this.array = newArray;
     }
 
@@ -80,6 +86,10 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         } else {
             return (tail + 1) + (array.length - head);
         }
+    }
+
+    public int arraySize() {
+        return array.length;
     }
 
     public void printDeque() {
@@ -143,7 +153,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         return item;
     }
 
-    public T removeLastOne() {
+    private T removeLastOne() {
         T item = array[head];
         head = -1;
         tail = -1;
