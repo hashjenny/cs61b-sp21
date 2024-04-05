@@ -72,10 +72,6 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         tail = 0;
     }
 
-    public boolean isEmpty() {
-        return size() == 0;
-    }
-
     public int size() {
         if (head < 0 || tail < 0) {
             return 0;
