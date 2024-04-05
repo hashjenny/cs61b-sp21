@@ -33,8 +33,6 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         }
         if (size() == array.length) {
             resize(array.length + array.length / 3);
-            addFirst(item);
-            return;
         }
 
         if (head == 0) {
@@ -52,8 +50,6 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         }
         if (size() == array.length) {
             resize(array.length + array.length / 3);
-            addLast(item);
-            return;
         }
 
         if (tail == array.length - 1) {
