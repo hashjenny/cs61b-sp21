@@ -88,7 +88,14 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     public void printDeque() {
         for (int i = 0; i < size(); i++) {
-            System.out.printf(get(i) + "");
+            System.out.printf(get(i) + " ");
+        }
+        System.out.println();
+    }
+
+    public void print() {
+        for (T t : array) {
+            System.out.printf(t + " ");
         }
         System.out.println();
     }
@@ -151,7 +158,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         if (index > size() - 1 || index < 0) {
             return null;
         }
-        if (head + index > array.length) {
+        if (head + index >= array.length) {
             return array[index - (array.length - head)];
         }
         return array[head + index];
