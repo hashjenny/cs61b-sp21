@@ -174,10 +174,10 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public Iterator<T> iterator() {
-        return new ArrayIterator<>();
+        return new ArrayIterator();
     }
 
-    private class ArrayIterator<T> implements Iterator<T> {
+    private class ArrayIterator implements Iterator<T> {
 
         private int index;
 
@@ -191,12 +191,11 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public T next() {
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
-            T item = (T) get(index);
+            T item = get(index);
             index++;
             return item;
         }
