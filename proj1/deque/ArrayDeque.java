@@ -84,23 +84,12 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         }
     }
 
-//    public int arraySize() {
-//        return array.length;
-//    }
-
     public void printDeque() {
         for (int i = 0; i < size(); i++) {
             System.out.printf(get(i) + " ");
         }
         System.out.println();
     }
-
-//    public void print() {
-//        for (T t : array) {
-//            System.out.printf(t + " ");
-//        }
-//        System.out.println();
-//    }
 
     public T removeFirst() {
         if (size() == 0) {
@@ -168,16 +157,14 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
 
     public boolean equals(Object o) {
-        if (!(o instanceof ArrayDeque)) {
+        if (!(o instanceof Deque)) {
             return false;
         }
-        if (head != ((ArrayDeque<?>) o).head
-                || tail != ((ArrayDeque<?>) o).tail
-                || size() != ((ArrayDeque<?>) o).size()) {
+        if (this.size() != ((Deque<?>) o).size()) {
             return false;
         }
         for (int i = 0; i < size(); i++) {
-            if (this.get(i) != ((ArrayDeque<?>) o).get(i)) {
+            if (this.get(i) != ((Deque<?>) o).get(i)) {
                 return false;
             }
         }
@@ -193,7 +180,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
         private int index;
 
-        public ArrayIterator() {
+        private ArrayIterator() {
             index = 0;
         }
 

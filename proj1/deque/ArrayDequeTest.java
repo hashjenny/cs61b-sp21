@@ -35,6 +35,11 @@ public class ArrayDequeTest {
     @Test
     public void equalTest() {
         ArrayDeque<Integer> arr = new ArrayDeque<>();
+        ArrayDeque<Integer> arr2 = new ArrayDeque<>();
+
+        Assert.assertEquals(arr, arr2);
+        Assert.assertTrue(arr.isEmpty() && arr2.isEmpty());
+
         arr.addLast(1);
         arr.addFirst(2);
         arr.addLast(1);
@@ -42,7 +47,6 @@ public class ArrayDequeTest {
         arr.addLast(1);
         arr.addLast(4);
 
-        ArrayDeque<Integer> arr2 = new ArrayDeque<>();
         arr2.addLast(1);
         arr2.addFirst(2);
         arr2.addLast(1);
@@ -50,13 +54,53 @@ public class ArrayDequeTest {
         arr2.addLast(1);
 
         Assert.assertNotEquals(arr, arr2);
+        Assert.assertNotSame(arr, arr2);
 
         arr2.addFirst(4);
         Assert.assertNotEquals(arr, arr2);
+        Assert.assertNotSame(arr, arr2);
 
         arr2.removeFirst();
         arr2.addLast(4);
         Assert.assertEquals(arr, arr2);
+        Assert.assertEquals(arr.size(),arr2.size());
+//        arr.printDeque();
+//        arr2.printDeque();
+
+    }
+
+    @Test
+    public void equalTest2() {
+        ArrayDeque<Integer> arr = new ArrayDeque<>();
+        LinkedListDeque<Integer> arr2 = new LinkedListDeque<>();
+
+        Assert.assertTrue(arr.equals(arr2));
+        Assert.assertTrue(arr.isEmpty() && arr2.isEmpty());
+
+        arr.addLast(1);
+        arr.addFirst(2);
+        arr.addLast(1);
+        arr.addFirst(3);
+        arr.addLast(1);
+        arr.addLast(4);
+
+        arr2.addLast(1);
+        arr2.addFirst(2);
+        arr2.addLast(1);
+        arr2.addFirst(3);
+        arr2.addLast(1);
+
+        Assert.assertFalse(arr.equals(arr2));
+
+        arr2.addFirst(4);
+        Assert.assertFalse(arr.equals(arr2));
+
+        arr2.removeFirst();
+        arr2.addLast(4);
+        Assert.assertTrue(arr.equals(arr2));
+        Assert.assertEquals(arr.size(),arr2.size());
+//        arr.printDeque();
+//        arr2.printDeque();
 
     }
 

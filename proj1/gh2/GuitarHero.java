@@ -24,7 +24,7 @@ public class GuitarHero {
                 var index = keyboard.indexOf(key);
 
                 if (index >= 0) {
-                    guitarStringDeque.get(index).pluck();;
+                    guitarStringDeque.get(index).pluck();
                 }
 
             }
@@ -33,18 +33,14 @@ public class GuitarHero {
             for (var guitarString: guitarStringDeque) {
                 sample += guitarString.sample();
             }
-//            for (int i = 0; i < guitarStringDeque.size(); i++) {
-//                sample += guitarStringDeque.get(i).sample();
-//            }
+
 
             StdAudio.play(sample);
 
             for (var guitarString: guitarStringDeque) {
                 guitarString.tic();
             }
-//            for (int i = 0; i < guitarStringDeque.size(); i++) {
-//                guitarStringDeque.get(i).tic();
-//            }
+
         }
     }
 }

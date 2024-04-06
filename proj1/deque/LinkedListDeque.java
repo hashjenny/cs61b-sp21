@@ -10,7 +10,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         private Node<T> prev;
         private Node<T> next;
 
-        public Node(T item) {
+        private Node(T item) {
             this.value = item;
             this.prev = null;
             this.next = null;
@@ -124,7 +124,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     private class LinkedListIterator implements Iterator<T> {
         private Node<T> current;
 
-        public LinkedListIterator() {
+        private LinkedListIterator() {
             current = sentinel;
         }
 
@@ -144,15 +144,15 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     }
 
     public boolean equals(Object o) {
-        if (!(o instanceof LinkedListDeque)) {
+        if (!(o instanceof Deque)) {
             return false;
         }
-        var obj = (LinkedListDeque<?>) o;
-        if (size() != obj.size()) {
+        var obj = (Deque<?>) o;
+        if (this.size() != obj.size()) {
             return false;
         }
-        for (int index = 0; index < size(); index++) {
-            if (get(index) != obj.get(index)) {
+        for (int index = 0; index < this.size(); index++) {
+            if (this.get(index) != obj.get(index)) {
                 return false;
             }
         }

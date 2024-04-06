@@ -22,7 +22,7 @@ public class MaxArrayDequeTest {
     public void maxTest2() {
         MaxArrayDeque<Double> arr = new MaxArrayDeque<>(new DequeItemComparator<>());
         for (int i = 0; i < 16; i++) {
-            arr.addFirst((double)i);
+            arr.addFirst((double) i);
         }
 
         arr.printDeque();
@@ -39,7 +39,7 @@ public class MaxArrayDequeTest {
         Assert.assertEquals((int) arr.max(new DequeItemComparator<>()), 15);
     }
 
-    private class DequeItemComparator<T> implements Comparator<T> {
+    private static class DequeItemComparator<T> implements Comparator<T> {
         @Override
         public int compare(T o1, T o2) {
             if (o1 instanceof Integer) {
