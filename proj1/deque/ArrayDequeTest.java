@@ -105,6 +105,46 @@ public class ArrayDequeTest {
     }
 
     @Test
+    public void equalTest3() {
+        ArrayDeque<String> arr = new ArrayDeque<>();
+        LinkedListDeque<String> arr2 = new LinkedListDeque<>();
+
+        Assert.assertTrue(arr.equals(arr2));
+        Assert.assertTrue(arr.isEmpty() && arr2.isEmpty());
+
+        arr.addLast("1");
+        arr2.addLast("1");
+
+        var s1 = "15555555555555555555555555555555555555555555555";
+        var s2 = "15555555555555555555555555555555555555555555555";
+        arr.addLast(s1);
+        arr2.addLast(s2);
+
+        Assert.assertTrue(arr.equals(arr2));
+        Assert.assertEquals(arr.size(),arr2.size());
+
+    }
+
+    @Test
+    public void equalTest4() {
+        ArrayDeque<Deque<Integer>> arr = new ArrayDeque<>();
+        LinkedListDeque<Deque<Integer>> arr2 = new LinkedListDeque<>();
+
+        Assert.assertTrue(arr.equals(arr2));
+        Assert.assertTrue(arr.isEmpty() && arr2.isEmpty());
+
+        var s1 = new LinkedListDeque<Integer>();
+        var s2 = new ArrayDeque<Integer>();
+        Assert.assertTrue(s1.equals(s2));
+        arr.addLast(s1);
+        arr2.addLast(s2);
+
+        Assert.assertTrue(arr.equals(arr2));
+        Assert.assertEquals(arr.size(),arr2.size());
+
+    }
+
+    @Test
     public void resizeTest1(){
         ArrayDeque<Integer> arr = new ArrayDeque<>();
         for (int i = 0; i < 100; i++) {

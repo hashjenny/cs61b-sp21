@@ -218,4 +218,23 @@ public class LinkedListDequeTest {
         arr2.printDeque();
 
     }
+
+    @Test
+    public void equalTest4() {
+        ArrayDeque<Deque<Integer>> arr = new ArrayDeque<>();
+        LinkedListDeque<Deque<Integer>> arr2 = new LinkedListDeque<>();
+
+        Assert.assertTrue(arr2.equals(arr));
+        Assert.assertTrue(arr.isEmpty() && arr2.isEmpty());
+
+        var s1 = new LinkedListDeque<Integer>();
+        var s2 = new ArrayDeque<Integer>();
+        Assert.assertTrue(s1.equals(s2));
+        arr.addLast(s1);
+        arr2.addLast(s2);
+
+        Assert.assertTrue(arr2.equals(arr));
+        Assert.assertEquals(arr.size(),arr2.size());
+
+    }
 }
