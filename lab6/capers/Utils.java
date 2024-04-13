@@ -4,7 +4,6 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -12,11 +11,6 @@ import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Formatter;
-import java.util.List;
 
 
 /**
@@ -151,7 +145,7 @@ class Utils {
     /**
      * Prints out MESSAGE and exits with error code -1.
      * Note:
-     * The functionality for erroring/exit codes is different within Gitlet
+     * The functionality for error/exit codes is different within Gitlet
      * so DO NOT use this as a reference.
      * Refer to the spec for more information.
      *
@@ -166,7 +160,7 @@ class Utils {
 
     /**
      * Return a RuntimeException whose message is composed from MSG and ARGS as
-     * for the String.format method.
+     * for the String.format() method.
      */
     static RuntimeException error(String msg, Object... args) {
         return new RuntimeException(String.format(msg, args));

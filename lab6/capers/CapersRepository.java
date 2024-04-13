@@ -3,19 +3,16 @@ package capers;
 import java.io.File;
 import java.io.IOException;
 
-import static capers.Utils.*;
-
 /**
  * A repository for Capers
  *
- * @author TODO
+ * @author
  * The structure of a Capers Repository is as follows:
  * <p>
  * .capers/ -- top level folder for all persistent data in your lab12 folder
- * - dogs/ -- folder containing all of the persistent data for dogs
+ * - dogs/ -- folder containing all the persistent data for dogs
  * - story -- file containing the current story
  * <p>
- * TODO: change the above structure if you do something different.
  */
 public class CapersRepository {
     /**

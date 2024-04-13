@@ -1,15 +1,13 @@
 package capers;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 
 import static capers.Utils.*;
 
 /**
  * Canine Capers: A Gitlet Prelude.
  *
- * @author TODO
+ * @author hashjenny
  */
 public class Main {
     /**
@@ -35,7 +33,7 @@ public class Main {
      * YOUR PROGRAM SHOULD CREATE THESE FOLDERS/FILES*
      * <p>
      * .capers/ -- top level folder for all persistent data in your lab12 folder
-     * - dogs/ -- folder containing all of the persistent data for dogs
+     * - dogs/ -- folder containing all the persistent data for dogs
      * - story -- file containing the current story
      *
      * @param args arguments from the command line
