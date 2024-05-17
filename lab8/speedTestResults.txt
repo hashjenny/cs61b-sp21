@@ -1,0 +1,38 @@
+
+----------------Buckets Speed Test------------------------
+This program inserts random Strings of length L
+Into different types of maps as <String, Integer> pairs.
+What would you like L to be?: 100
+Enter # strings to insert into each map: 10000
+class hashmap.MyHashMapALBuckets: 1.36 sec
+class hashmap.MyHashMapLLBuckets: 1.41 sec
+class hashmap.MyHashMapTSBuckets: 1.39 sec
+class hashmap.MyHashMapHSBuckets: 1.41 sec
+class hashmap.MyHashMapPQBuckets: 1.40 sec
+
+--------------Insert In Order Speed Test-----------------
+This program inserts lexicographically increasing Stringsinto Maps as <String, Integer> pairs.
+
+Enter # strings to insert into hashmap.ULLMap: 30000
+class hashmap.ULLMap: 2.30 sec
+
+Enter # strings to insert into hashmap.MyHashMap: 30000
+class hashmap.MyHashMap: 1.93 sec
+
+Enter # strings to insert into Java's HashMap: 30000
+Java's Built-in HashMap: 0.03 sec
+
+--------------Insert Random Speed Test-------------------
+This program inserts random Strings of length L
+Into different types of maps as <String, Integer> pairs.
+
+What would you like L to be?: 100
+
+Enter # strings to insert into hashmap.ULLMap: 30000
+class hashmap.ULLMap: 5.94 sec
+
+Enter # strings to insert into your hashmap.MyHashMap: 30000
+class hashmap.MyHashMap: 1.90 sec
+
+Enter # strings to insert into Java's HashMap: 30000
+Java's Built-in HashMap: 0.03 sec
