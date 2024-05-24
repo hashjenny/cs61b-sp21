@@ -1,3 +1,5 @@
+import java.util.Stack;
+
 public class RedBlackTree<T extends Comparable<T>> {
 
     /* Root of the tree. */
@@ -72,10 +74,7 @@ public class RedBlackTree<T extends Comparable<T>> {
         node.isBlack = false;
         node.left.isBlack = true;
         node.right.isBlack = true;
-        if (node == this.root) {
-            return;
-        }
-        flipColors(findParent(this.root, null, node.item).parent);
+
     }
 
     /* Rotates the given node to the right. Returns the new root node of
@@ -87,33 +86,28 @@ public class RedBlackTree<T extends Comparable<T>> {
         }
 
 //      see  https://fa23.datastructur.es/materials/lab/lab08/#llrb-insertion-summary
-        var isRoot = node == this.root;
-        var leftNode = node.left;
+        var newNode = node.left;
+        swapColor(node, newNode);
         var leftPart = node.left.left;
         var midPart = node.left.right;
         var rightPart = node.right;
+        var isRoot = node == this.root;
         var parentInfo = findParent(this.root, null, node.item);
-
-//      rotateToRightNode => the root node rotate to right
-        var rotateToRightNode = new RBTreeNode<>(leftNode.isBlack, node.item);
-        rotateToRightNode.left = midPart;
-        rotateToRightNode.right = rightPart;
-
-//      node => the left of the root node rotate to right, become a new root node
-        node = new RBTreeNode<>(node.isBlack, leftNode.item);
-        node.left = leftPart;
-        node.right = rotateToRightNode;
+        newNode.left = leftPart;
+        newNode.right = node;
+        node.left = midPart;
+        node.right = rightPart;
         if (isRoot) {
-            this.root = node;
-        } else if (this.root != null){
+            this.root = newNode;
+        } else if (this.root != null) {
             var parent = parentInfo.parent;
-            if (parentInfo.side <0) {
-                parent.left = node;
+            if (parentInfo.side < 0) {
+                parent.left = newNode;
             } else if (parentInfo.side > 0) {
-                parent.right = node;
+                parent.right = newNode;
             }
         }
-        return node;
+        return newNode;
     }
 
     /* Rotates the given node to the left. Returns the new root node of
@@ -124,39 +118,52 @@ public class RedBlackTree<T extends Comparable<T>> {
             return null;
         }
 
-//      see  https://fa23.datastructur.es/materials/lab/lab08/#llrb-insertion-summary
-        var isRoot = node == this.root;
-        var rightNode = node.right;
+        var newNode = node.right;
+        swapColor(node, newNode);
         var leftPart = node.left;
         var midPart = node.right.left;
         var rightPart = node.right.right;
+        var isRoot = node == this.root;
         var parentInfo = findParent(this.root, null, node.item);
-
-        var rotateToLeftNode = new RBTreeNode<>(rightNode.isBlack, node.item);
-        rotateToLeftNode.left = leftPart;
-        rotateToLeftNode.right = midPart;
-
-        node = new RBTreeNode<>(node.isBlack, rightNode.item);
-        node.left = rotateToLeftNode;
-        node.right = rightPart;
-
+        newNode.left = node;
+        newNode.right = rightPart;
+        node.left = leftPart;
+        node.right = midPart;
         if (isRoot) {
-            this.root = node;
-        } else if (this.root != null){
+            this.root = newNode;
+        } else if (this.root != null) {
             var parent = parentInfo.parent;
-            if (parentInfo.side <0) {
-                parent.left = node;
+            if (parentInfo.side < 0) {
+                parent.left = newNode;
             } else if (parentInfo.side > 0) {
-                parent.right = node;
+                parent.right = newNode;
             }
         }
-        return node;
+        return newNode;
+    }
+
+    void swapColor(RBTreeNode<T> node1, RBTreeNode<T> node2) {
+        var color1 = node1.isBlack;
+        node1.isBlack = node2.isBlack;
+        node2.isBlack = color1;
     }
 
     public void insert(T item) {
         root = insert(root, item);
         root.isBlack = true;
     }
+
+    static class PreNodeInfo {
+        RBTreeNode node;
+        int cmp;
+
+        public PreNodeInfo(RBTreeNode node, int cmp) {
+            this.node = node;
+            this.cmp = cmp;
+        }
+    }
+
+    private static final Stack<PreNodeInfo> stack = new Stack<>();
 
     /* Inserts the given node into this Red Black Tree. Comments have been provided to help break
      * down the problem. For each case, consider the scenario needed to perform those operations.
@@ -166,9 +173,9 @@ public class RedBlackTree<T extends Comparable<T>> {
         if (node == null) {
             return new RBTreeNode<>(false, item);
         }
-
         // Handle normal binary search tree insertion.
         int comp = item.compareTo(node.item);
+        stack.push(new PreNodeInfo(node, comp));
         if (comp == 0) {
             return node; // do nothing.
         } else if (comp < 0) {
@@ -177,35 +184,56 @@ public class RedBlackTree<T extends Comparable<T>> {
             node.right = insert(node.right, item);
         }
 
+        var newNode = node;
+
 //        node is black
         if (isBlack(node)) {
 
             if (isBlack(node.left) && isRed(node.right)) {
-                rotateLeft(node);
-            }
-            if (isRed(node.left) && isRed(node.right)) {
+                newNode = rotateLeft(node);
+            } else if (isRed(node.left) && isRed(node.right)) {
                 flipColors(node);
             }
         } else {
             //        node is red
             if (isRed(node.left)) {
                 var parent = findParent(root, null, node.item).parent;
-                var newNode = rotateRight(parent);
+                newNode = rotateRight(parent);
                 flipColors(newNode);
-            }
 
-            if (isRed(node.right)) {
-                var newNode = rotateLeft(node);
-                newNode = rotateRight(findParent(this.root, null, newNode.item).parent);
+                stack.pop();
+                var cmp = stack.peek().cmp;
+                if (cmp < 0) {
+                    return parent.left;
+                } else {
+                    return parent.right;
+                }
+            } else if (isRed(node.right)) {
+                var parent = findParent(root, null, node.item).parent;
+                rotateLeft(node);
+                newNode = rotateRight(parent);
                 flipColors(newNode);
+
+                stack.pop();
+                var cmp = stack.peek().cmp;
+                if (cmp < 0) {
+                    return parent.left;
+                } else {
+                    return parent.right;
+                }
             }
         }
 
-        return this.root;
-//        if (comp < 0)
-//            return node.left;
-//        else
-//            return node.right;//fix this return statement
+        stack.pop();
+        if (stack.isEmpty()) {
+            return this.root;
+        }
+//        查看上一个节点的左右走向
+        var preNodeInfo = stack.peek();
+        if (preNodeInfo.cmp < 0) {
+            return preNodeInfo.node.left;
+        }
+        return preNodeInfo.node.right;
     }
 
     private ParentInfo findParent(RBTreeNode<T> currentNode, ParentInfo parentInfo, T target) {
@@ -230,6 +258,7 @@ public class RedBlackTree<T extends Comparable<T>> {
     class ParentInfo {
         RBTreeNode<T> parent;
         int side;
+
         ParentInfo(RBTreeNode<T> parent, int side) {
             this.parent = parent;
             this.side = side;

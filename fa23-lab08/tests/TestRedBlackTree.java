@@ -299,9 +299,10 @@ public class TestRedBlackTree {
         RedBlackTree<Integer> rbtree = new TestableRedBlackTree();
 
         rbtree.insert(5);
-        rbtree.insert(11);
-        rbtree.insert(3);
+        rbtree.insert(11); //pass
+        rbtree.insert(3);  //pass
         rbtree.insert(9);
+//        stackoverflow here
         rbtree.insert(7);
         rbtree.insert(1);
         rbtree.insert(2);
