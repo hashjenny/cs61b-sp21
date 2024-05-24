@@ -85,7 +85,7 @@ public class RedBlackTree<T extends Comparable<T>> {
             return null;
         }
 
-//      see  https://fa23.datastructur.es/materials/lab/lab08/#llrb-insertion-summary
+        //see  https://fa23.datastructur.es/materials/lab/lab08/#llrb-insertion-summary
         var newNode = node.left;
         swapColor(node, newNode);
         var leftPart = node.left.left;
@@ -163,7 +163,7 @@ public class RedBlackTree<T extends Comparable<T>> {
         }
     }
 
-    private static final Stack<PreNodeInfo> stack = new Stack<>();
+    private static final Stack<PreNodeInfo> STACK = new Stack<>();
 
     /* Inserts the given node into this Red Black Tree. Comments have been provided to help break
      * down the problem. For each case, consider the scenario needed to perform those operations.
@@ -175,7 +175,7 @@ public class RedBlackTree<T extends Comparable<T>> {
         }
         // Handle normal binary search tree insertion.
         int comp = item.compareTo(node.item);
-        stack.push(new PreNodeInfo(node, comp));
+        STACK.push(new PreNodeInfo(node, comp));
         if (comp == 0) {
             return node; // do nothing.
         } else if (comp < 0) {
@@ -186,7 +186,7 @@ public class RedBlackTree<T extends Comparable<T>> {
 
         var newNode = node;
 
-//        node is black
+        // node is black
         if (isBlack(node)) {
 
             if (isBlack(node.left) && isRed(node.right)) {
@@ -195,14 +195,14 @@ public class RedBlackTree<T extends Comparable<T>> {
                 flipColors(node);
             }
         } else {
-            //        node is red
+            //node is red
             if (isRed(node.left)) {
                 var parent = findParent(root, null, node.item).parent;
                 newNode = rotateRight(parent);
                 flipColors(newNode);
 
-                stack.pop();
-                var cmp = stack.peek().cmp;
+                STACK.pop();
+                var cmp = STACK.peek().cmp;
                 if (cmp < 0) {
                     return parent.left;
                 } else {
@@ -214,8 +214,8 @@ public class RedBlackTree<T extends Comparable<T>> {
                 newNode = rotateRight(parent);
                 flipColors(newNode);
 
-                stack.pop();
-                var cmp = stack.peek().cmp;
+                STACK.pop();
+                var cmp = STACK.peek().cmp;
                 if (cmp < 0) {
                     return parent.left;
                 } else {
@@ -224,12 +224,12 @@ public class RedBlackTree<T extends Comparable<T>> {
             }
         }
 
-        stack.pop();
-        if (stack.isEmpty()) {
+        STACK.pop();
+        if (STACK.isEmpty()) {
             return this.root;
         }
-//        查看上一个节点的左右走向
-        var preNodeInfo = stack.peek();
+        //查看上一个节点的左右走向
+        var preNodeInfo = STACK.peek();
         if (preNodeInfo.cmp < 0) {
             return preNodeInfo.node.left;
         }

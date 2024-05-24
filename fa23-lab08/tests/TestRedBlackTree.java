@@ -4,7 +4,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 
-
 public class TestRedBlackTree {
 
     /*
@@ -357,7 +356,7 @@ public class TestRedBlackTree {
         assertWithMessage("Number of Calls to Flip Colors after inserting (5, 11, 3, 9, 7, 1, 2) in order").that(callsToFlipColors).isEqualTo(4);
         assertWithMessage("Number of Calls to Rotate Left after inserting (5, 11, 3, 9, 7, 1, 2) in order").that(callsToRotateLeft).isEqualTo(3);
         assertWithMessage("Number of Calls to Rotate Right after inserting (5, 11, 3, 9, 7, 1, 2) in order").that(callsToRotateRight).isEqualTo(4);
-        
+
     }
 
 
@@ -384,7 +383,7 @@ public class TestRedBlackTree {
             callsToRotateLeft++;
             return super.rotateLeft(node);
         }
-        
+
     }
 
     private int callsToFlipColors = 0;
