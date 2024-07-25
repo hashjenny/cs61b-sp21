@@ -28,8 +28,8 @@ public class TestArrayDequeEC {
             }
         }
 
-        studentDeque.printDeque();
-        System.out.println(arrayDeque.toString());
+//        studentDeque.printDeque();
+//        System.out.println(arrayDeque.toString());
         msg += ("size()\n");
         assertEquals(msg, arrayDeque.size(), studentDeque.size());
 
@@ -41,19 +41,19 @@ public class TestArrayDequeEC {
                 var item2 = arrayDeque.removeLast();
                 msg += ("removeLast()\n");
                 assertEquals(msg, item2, item1);
-                System.out.println("-------------");
-                System.out.println("removeLast()" + item1);
-                studentDeque.printDeque();
-                System.out.println(arrayDeque.toString());
+//                System.out.println("-------------");
+//                System.out.println("removeLast()" + item1);
+//                studentDeque.printDeque();
+//                System.out.println(arrayDeque.toString());
             } else {
                 var item1 = studentDeque.removeFirst();
                 var item2 = arrayDeque.removeFirst();
                 msg += ("removeFirst()\n");
                 assertEquals(msg, item2, item1);
-                System.out.println("-------------");
-                System.out.println("removeFirst()" + item1);
-                studentDeque.printDeque();
-                System.out.println(arrayDeque.toString());
+//                System.out.println("-------------");
+//                System.out.println("removeFirst()" + item1);
+//                studentDeque.printDeque();
+//                System.out.println(arrayDeque.toString());
             }
             msg += ("size()\n");
             assertEquals(msg, arrayDeque.size(), studentDeque.size());
