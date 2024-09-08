@@ -38,6 +38,7 @@ public class DumpObj {
             obj.dump();
             System.out.println("---");
         }
+
     }
 }
 
