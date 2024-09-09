@@ -32,14 +32,22 @@ public class Repository {
     public static final File COMMIT = join(GITLET_DIR, "_Commit");
     // file
     public static final File HEAD = join(GITLET_DIR, "_Head");
-    // dir
+    // file
     public static final File BRANCH = join(GITLET_DIR, "_Branch");
-    // dir
+    // file
     public static final File STAGING_AREA = join(GITLET_DIR, "_StagingArea");
+//    public static final File ADDITION = join(GITLET_DIR, "_Addition");
+//    public static final File REMOVAL = join(GITLET_DIR, "_Removal");
+//    public static final File MODIFICATION = join(GITLET_DIR, "_Modification");
+//    public static final File UNTRACKED = join(GITLET_DIR, "_Untracked");
+
 
     public static Head head;
     public static HashMap<String,Branch> branches = new HashMap<>();
     public static StagingArea stagingArea;
+    // TODO: git status
+    public static HashMap<ModificationInformation, String> modificationFiles = new HashMap<>();
+    public static HashMap<String, String> untrackedFiles = new HashMap<>();
 
     public static void setupGitletFolder() throws IOException {
         if (GITLET_DIR.exists()) {
@@ -47,9 +55,12 @@ public class Repository {
         }
         GITLET_DIR.mkdir();
         COMMIT.mkdir();
-        BRANCH.mkdir();
+        BRANCH.createNewFile();
         HEAD.createNewFile();
         STAGING_AREA.createNewFile();
+//        ADDITION.mkdir();
+//        REMOVAL.mkdir();
+//        MODIFICATION.mkdir();
     }
 
     public static void loadGitletFolder(){
@@ -59,23 +70,24 @@ public class Repository {
         }
         head = Utils.readObject(HEAD, Head.class);
 
-        var branchFiles = Utils.plainFilenamesIn(BRANCH);
-        if (branchFiles != null) {
-            for (var f : branchFiles) {
-                var branch = Utils.readObject(new File(f), Branch.class);
-                branches.put(branch.branchName, branch);
-            }
-        }
-
+//        var branchFiles = Utils.plainFilenamesIn(BRANCH);
+//        if (branchFiles != null) {
+//            for (var f : branchFiles) {
+//                var branch = Utils.readObject(new File(f), Branch.class);
+//                branches.put(branch.branchName, branch);
+//            }
+//        }
+        branches = Utils.readObject(BRANCH, HashMap.class);
         stagingArea = Utils.readObject(STAGING_AREA, StagingArea.class);
     }
 
     public static void init() {
         var initCommit = new Commit("initial commit");
         var branch = new Branch("master", initCommit.id);
+        branches.put(branch.branchName, branch);
         var head = new Head(initCommit.id, branch.branchName);
 
-        Utils.writeObject(Utils.join(BRANCH, branch.branchName), branch);
+        Utils.writeObject(BRANCH, branches);
         Utils.writeObject(Utils.join(COMMIT, initCommit.id), initCommit);
         Utils.writeObject(HEAD, head);
     }
@@ -87,8 +99,12 @@ public class Repository {
 
         var blob = new Blob(filename);
         stagingArea.removedFiles.remove(blob.filename);
-        if (getLastCommitFile(blob.filename).content.equals(blob.content)) {
-            stagingArea.stagedFiles.remove(blob.filename);
+
+        var lastBlob = getLastCommitFile(blob.filename);
+        if (lastBlob != null) {
+            if (lastBlob.content.equals(blob.content)) {
+                stagingArea.stagedFiles.remove(blob.filename);
+            }
         }
         stagingArea.stagedFiles.put(blob.filename, blob.id);
     }
