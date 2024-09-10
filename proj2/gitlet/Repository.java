@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import static gitlet.Utils.*;
 
@@ -47,7 +48,9 @@ public class Repository {
     public static Commit head;
     public static HashMap<String, ArrayList<Commit>> branches = new HashMap<>();
     public static ArrayList<Commit> currentBranch = new ArrayList<>();
-    public static StagingArea stagingArea = new StagingArea();
+//    public static StagingArea stagingArea = new StagingArea();
+    public static HashMap<String, Blob> addition = new HashMap<>();
+    public static HashSet<String> removal = new HashSet<>();
     // TODO: git status
     public static HashMap<ModificationInformation, String> modificationFiles = new HashMap<>();
     public static HashMap<String, String> untrackedFiles = new HashMap<>();
@@ -86,6 +89,7 @@ public class Repository {
     public static void storeGitlet() {
         Utils.writeContents(HEAD, head.id);
 
+//        FileUtils.deleteAll(ADDITION);
 //        REMOVAL.delete();
 //        writeObject(REMOVAL, stagingArea.removal);
     }
@@ -97,10 +101,8 @@ public class Repository {
         branches.put("master", branch);
 //        head = new Head(initCommit.id, "master");
         head = initCommit;
-        var branchFile = join(BRANCH, "master");
-        Utils.writeObject(branchFile, new Branch("master", initCommit.id));
+        Utils.writeObject(join(BRANCH, "master"), new Branch("master", initCommit.id));
         Utils.writeObject(Utils.join(COMMIT, initCommit.id), initCommit);
-//        Utils.writeObject(HEAD, head);
         Utils.writeContents(HEAD, head.id);
     }
 
@@ -110,19 +112,35 @@ public class Repository {
         }
 
         var blob = new Blob(filename);
-        stagingArea.removal.remove(blob.filename);
+        removal.remove(blob.filename);
 
         var lastBlob = getLastCommitFile(blob.filename);
         if (lastBlob != null) {
             if (lastBlob.content.equals(blob.content)) {
-                stagingArea.addition.remove(blob.filename);
+                addition.remove(blob.filename);
                 FileUtils.delete(ADDITION, blob.id);
             }
         }
 
-        stagingArea.addition.put(blob.filename, blob);
+        addition.put(blob.filename, blob);
         var file = join(ADDITION, blob.id);
         writeObject(file, blob);
+    }
+
+    public static void commit(String msg) {
+        if (addition.isEmpty() && removal.isEmpty()) {
+            Utils.message("No changes added to the commit.");
+        }
+
+        var commit = new Commit(msg);
+        commit.setParentId(head.id);
+
+        head = commit;
+
+        addition.clear();
+        removal.clear();
+        FileUtils.deleteAll(ADDITION);
+        REMOVAL.delete();
     }
 
     private static Blob getLastCommitFile(String filename) {

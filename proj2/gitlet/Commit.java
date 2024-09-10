@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -50,7 +51,15 @@ public class Commit implements Serializable {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE MMM d HH:mm:ss yyyy XX", Locale.US);
         this.timestamp = zonedDateTime.format(formatter);
 
-        this.id = Utils.sha1(message, timestamp);
+        var sha1Items = new ArrayList<String>();
+        for (var entry : files.entrySet()) {
+            sha1Items.add(entry.getValue());
+        }
+        sha1Items.add(parentId);
+        sha1Items.add(mergedParentId);
+        sha1Items.add(message);
+        sha1Items.add(timestamp);
+        this.id = Utils.sha1(sha1Items.toArray());
     }
 
     public String getMessage() {
@@ -80,4 +89,5 @@ public class Commit implements Serializable {
     public void addFile(String fileName, String blobId) {
         this.files.put(fileName, blobId);
     }
+
 }

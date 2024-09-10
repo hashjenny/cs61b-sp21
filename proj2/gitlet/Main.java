@@ -31,7 +31,10 @@ public class Main {
                 break;
             case "commit":
                 Repository.loadGitlet();
-
+                if (args.length < 2) {
+                    throw Utils.error("Please enter a commit message.");
+                }
+                Repository.commit(args[1]);
                 break;
             default:
                 Utils.message("No command with that name exists.");
