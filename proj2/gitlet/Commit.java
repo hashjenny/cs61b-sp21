@@ -26,20 +26,31 @@ public class Commit implements Serializable {
      * variable is used. We've provided one example for `message`.
      */
 
+
+
     /** The message of this Commit. */
     public final String id;
-    private final String message;
-    private final String timestamp;
-    private String parentId;
-    private String mergedParentId;
+    public final String message;
+    public final String timestamp;
+    public final String parentId;
+    public final String mergedParentId;
     // file: filename -> blobId
     public HashMap<String, String> files;
 
+    // for "gitlet init"
     public Commit(String message) {
+        this(message, "", "");
+    }
+
+    public Commit(String message, String parentId) {
+        this(message, parentId, "");
+    }
+
+    public Commit(String message, String parentId, String mergedParentId) {
         this.message = message;
+        this.parentId = parentId;
+        this.mergedParentId = mergedParentId;
         this.files = new HashMap<>();
-        this.parentId = "";
-        this.mergedParentId = "";
 
         var unixEpoch = Instant.now();
         if (message.equals("initial commit")) {
@@ -61,30 +72,6 @@ public class Commit implements Serializable {
         sha1Items.add(message);
         sha1Items.add(timestamp);
         this.id = Utils.sha1(sha1Items.toArray());
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public String getTimestamp() {
-        return timestamp;
-    }
-
-    public String getParentId() {
-        return parentId;
-    }
-
-    public String getMergedParentId() {
-        return mergedParentId;
-    }
-
-    public void setParentId(String parentID) {
-        this.parentId = parentID;
-    }
-
-    public void setMergedParentId(String mergedParentId) {
-        this.mergedParentId = mergedParentId;
     }
 
     public void addFile(String fileName, String blobId) {

@@ -2,9 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 
 import static gitlet.Utils.*;
 
@@ -41,20 +39,20 @@ public class Repository {
     public static final File ADDITION = join(STAGING_AREA, "_Addition");
     // file
     public static final File REMOVAL = join(STAGING_AREA, "_Removal");
-//    public static final File MODIFICATION = join(GITLET_DIR, "_Modification");
-//    public static final File UNTRACKED = join(GITLET_DIR, "_Untracked");
-
+    // file
+    public static final File MODIFICATION = join(GITLET_DIR, "_Modification");
+    // file
+    public static final File UNTRACKED = join(GITLET_DIR, "_Untracked");
 
     public static Commit head;
     public static HashMap<String, ArrayList<Commit>> branches = new HashMap<>();
     public static ArrayList<Commit> currentBranch = new ArrayList<>();
-//    public static StagingArea stagingArea = new StagingArea();
     // filename -> blob
     public static HashMap<String, Blob> addition = new HashMap<>();
     public static HashSet<String> removal = new HashSet<>();
     // TODO: git status
-    public static HashMap<ModificationInformation, String> modificationFiles = new HashMap<>();
-    public static HashMap<String, String> untrackedFiles = new HashMap<>();
+    public static HashMap<ModificationInformation, String> modificationMap = new HashMap<>();
+    public static HashMap<String, String> untrackedMap = new HashMap<>();
 
     public static void setupGitlet() throws IOException {
         if (GITLET_DIR.exists()) {
@@ -75,31 +73,24 @@ public class Repository {
             Utils.message("Not in an initialized Gitlet directory.");
             System.exit(0);
         }
-//        head = Utils.readObject(HEAD, Head.class);
-
-//        var branchFile = join(BRANCH, head.branchName);
-//        currentBranch = Utils.
-
         head = getCommit(Utils.readContentsAsString(HEAD));
-        putAllBlobs(ADDITION, addition);
-//        stagingArea.removalFiles = Utils.readObject(REMOVAL, HashSet.class);
-//
-//        branches = Utils.readObject(BRANCH, HashMap.class);
+        addition = putAllBlobs(ADDITION);
+        removal = FileUtils.readItemsFormFile(REMOVAL);
+
     }
 
     public static void storeGitlet() {
         Utils.writeContents(HEAD, head.id);
-
-//        FileUtils.deleteAll(ADDITION);
-//        REMOVAL.delete();
-//        writeObject(REMOVAL, stagingArea.removal);
+        FileUtils.deleteAll(ADDITION);
+        FileUtils.writeAllObjects(ADDITION, addition);
+        FileUtils.writeItemsToFile(REMOVAL, removal);
     }
 
     public static void init() {
         var initCommit = new Commit("initial commit");
-        var branch = new ArrayList<Commit>();
-        branch.add(initCommit);
-        branches.put("master", branch);
+//        var branch = new ArrayList<Commit>();
+//        branch.add(initCommit);
+//        branches.put("master", branch);
 //        head = new Head(initCommit.id, "master");
         head = initCommit;
         Utils.writeObject(join(BRANCH, "master"), new Branch("master", initCommit.id));
@@ -115,7 +106,7 @@ public class Repository {
         var blob = new Blob(filename);
         removal.remove(blob.filename);
 
-        var lastBlob = getLastCommitFile(blob.filename);
+        var lastBlob = getLastBlob(blob.filename);
         if (lastBlob != null) {
             if (lastBlob.content.equals(blob.content)) {
                 addition.remove(blob.filename);
@@ -124,46 +115,105 @@ public class Repository {
         }
 
         addition.put(blob.filename, blob);
-        var file = join(ADDITION, blob.id);
-        writeObject(file, blob);
     }
 
-    public static void commit(String msg) {
+    public static void commit(String msg) throws IOException {
         if (addition.isEmpty() && removal.isEmpty()) {
             Utils.message("No changes added to the commit.");
+            System.exit(0);
         }
 
-        var commit = new Commit(msg);
-        commit.setParentId(head.id);
+        var commit = new Commit(msg, head.id);
         for (var entry : addition.entrySet()) {
             var blob = entry.getValue();
-            commit.files.put(blob.filename, blob.id);
+            commit.addFile(blob.filename, blob.id);
         }
         for (var removedFile : removal) {
-            commit.files.put(removedFile, null);
+            commit.addFile(removedFile, null);
         }
 
-
-
+        FileUtils.copyAll(ADDITION, GITLET_DIR);
+        Utils.writeObject(Utils.join(COMMIT, commit.id), commit);
         head = commit;
-
         addition.clear();
         removal.clear();
-        FileUtils.deleteAll(ADDITION);
-        REMOVAL.delete();
     }
 
-    private static Blob getLastCommitFile(String filename) {
+    public static void rm(String filename) {
+        if (!addition.containsKey(filename) && getLastBlob(filename) == null) {
+            throw Utils.error("No reason to remove the file.");
+        }
+        addition.remove(filename);
+        if (getLastBlob(filename) != null) {
+            var file = Utils.join(CWD, filename);
+//            if (file.exists()) {
+//                file.delete();
+//                removal.add(filename);
+//            }
+            Utils.restrictedDelete(file);
+            removal.add(filename);
+        }
+    }
+
+    public static void log() {
+        var commit = head;
+        while (commit != null) {
+            printCommit(commit);
+            commit = getCommit(commit.parentId);
+        }
+    }
+
+    public static void globalLog() {
+        var files = Utils.plainFilenamesIn(COMMIT);
+        if (files != null) {
+            for (var file : files) {
+                var path = Utils.join(COMMIT, file);
+                var commit = Utils.readObject(path, Commit.class);
+                printCommit(commit);
+            }
+        }
+    }
+
+    private static void printCommit(Commit commit) {
+        Utils.message("===");
+        Utils.message("commit %s", commit.id);
+        Utils.message("Date: %s", commit.timestamp);
+        Utils.message(commit.message);
+        if (!commit.mergedParentId.isEmpty()) {
+            // FIXME: merge branch name but not commit id
+            Utils.message("Merged %s into %s.", commit.mergedParentId, commit.mergedParentId);
+        }
+    }
+
+    public static void find(String commitMessage) {
+        var files = Utils.plainFilenamesIn(COMMIT);
+        var notMatchFlag = true;
+        if (files != null) {
+            for (var file : files) {
+                var path = Utils.join(COMMIT, file);
+                var commit = Utils.readObject(path, Commit.class);
+                if (commit.message.equals(commitMessage)) {
+                    Utils.message(commit.id);
+                    notMatchFlag = false;
+                }
+            }
+        }
+        if (notMatchFlag) {
+            throw Utils.error("Found no commit with that message.");
+        }
+    }
+
+    private static Blob getLastBlob(String filename) {
 //        var branchName = head.branchName;
 //        var id = branches.get(branchName).currentCommitID;
-
         String blobId = "";
         var commit = head;
-        while (!commit.getParentId().isEmpty()) {
+        while (commit != null) {
             if (commit.files.get(filename) != null) {
                 blobId = commit.files.get(filename);
+                break;
             } else {
-                commit = getCommit(commit.getParentId());
+                commit = getCommit(commit.parentId);
             }
         }
 
@@ -173,22 +223,27 @@ public class Repository {
         return getBlob(blobId);
     }
 
-    private static Blob getBlob(String id) {
+    public static Blob getBlob(String id) {
         return Utils.readObject(Utils.join(GITLET_DIR, id), Blob.class);
     }
 
-    private static Commit getCommit(String id) {
+    public static Commit getCommit(String id) {
+        if (id.isEmpty()) {
+            return null;
+        }
         return Utils.readObject(Utils.join(COMMIT, id), Commit.class);
     }
 
-    private static void putAllBlobs(File folder, HashMap<String, Blob> target) {
+    public static HashMap<String, Blob> putAllBlobs(File folder) {
+        var target = new HashMap<String, Blob>();
         var files = Utils.plainFilenamesIn(folder);
         if (files != null) {
             for (var f : files) {
-                var blob = Utils.readObject(new File(f), Blob.class);
+                var blob = Utils.readObject(Utils.join(folder, f), Blob.class);
                 target.put(blob.filename, blob);
             }
         }
+        return target;
     }
 
 

@@ -36,10 +36,31 @@ public class Main {
                 }
                 Repository.commit(args[1]);
                 break;
+            case "rm":
+                Repository.loadGitlet();
+                if (args.length < 2) {
+                    System.exit(0);
+                }
+                Repository.rm(args[1]);
+                break;
+            case "log":
+                Repository.loadGitlet();
+                Repository.log();
+                break;
+            case "global-log":
+                Repository.loadGitlet();
+                Repository.globalLog();
+                break;
+            case "find":
+                Repository.loadGitlet();
+                if (args.length < 2) {
+                    System.exit(0);
+                }
+                Repository.find(args[1]);
+                break;
             default:
                 Utils.message("No command with that name exists.");
                 System.exit(0);
-
         }
         Repository.storeGitlet();
     }
