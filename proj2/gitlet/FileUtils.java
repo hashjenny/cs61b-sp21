@@ -27,4 +27,13 @@ public class FileUtils {
         var target = join(targetFolder, filename);
         Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
+
+    public static void copyAll(File sourceFolder, File targetFolder) throws IOException {
+        var files = Utils.plainFilenamesIn(sourceFolder);
+        if (files != null) {
+            for (var file : files) {
+                copy(sourceFolder, targetFolder, file);
+            }
+        }
+    }
 }

@@ -49,6 +49,7 @@ public class Repository {
     public static HashMap<String, ArrayList<Commit>> branches = new HashMap<>();
     public static ArrayList<Commit> currentBranch = new ArrayList<>();
 //    public static StagingArea stagingArea = new StagingArea();
+    // filename -> blob
     public static HashMap<String, Blob> addition = new HashMap<>();
     public static HashSet<String> removal = new HashSet<>();
     // TODO: git status
@@ -80,7 +81,7 @@ public class Repository {
 //        currentBranch = Utils.
 
         head = getCommit(Utils.readContentsAsString(HEAD));
-//        putAllBlobs(ADDITION, stagingArea.additionFiles);
+        putAllBlobs(ADDITION, addition);
 //        stagingArea.removalFiles = Utils.readObject(REMOVAL, HashSet.class);
 //
 //        branches = Utils.readObject(BRANCH, HashMap.class);
@@ -134,6 +135,15 @@ public class Repository {
 
         var commit = new Commit(msg);
         commit.setParentId(head.id);
+        for (var entry : addition.entrySet()) {
+            var blob = entry.getValue();
+            commit.files.put(blob.filename, blob.id);
+        }
+        for (var removedFile : removal) {
+            commit.files.put(removedFile, null);
+        }
+
+
 
         head = commit;
 

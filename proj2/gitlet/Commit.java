@@ -32,6 +32,7 @@ public class Commit implements Serializable {
     private final String timestamp;
     private String parentId;
     private String mergedParentId;
+    // file: filename -> blobId
     public HashMap<String, String> files;
 
     public Commit(String message) {
