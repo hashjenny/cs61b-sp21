@@ -31,11 +31,11 @@ public class Commit implements Serializable {
     private final String timestamp;
     private String parentId;
     private String mergedParentId;
-    public HashMap<String, String> commitFiles;
+    public HashMap<String, String> files;
 
     public Commit(String message) {
         this.message = message;
-        this.commitFiles = new HashMap<>();
+        this.files = new HashMap<>();
         this.parentId = "";
         this.mergedParentId = "";
 
@@ -78,6 +78,6 @@ public class Commit implements Serializable {
     }
 
     public void addFile(String fileName, String blobId) {
-        this.commitFiles.put(fileName, blobId);
+        this.files.put(fileName, blobId);
     }
 }

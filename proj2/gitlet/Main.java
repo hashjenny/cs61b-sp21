@@ -1,6 +1,5 @@
 package gitlet;
 
-import java.io.File;
 import java.io.IOException;
 
 /** Driver class for Gitlet, a subset of the Git version-control system.
@@ -13,28 +12,33 @@ public class Main {
      */
     public static void main(String[] args) throws IOException {
         if (args == null || args.length == 0) {
-            System.out.println("Please enter a command.");
+            Utils.message("Please enter a command.");
             System.exit(0);
         }
         String firstArg = args[0];
         switch(firstArg) {
             case "init":
-                Repository.setupGitletFolder();
+                Repository.setupGitlet();
                 Repository.init();
                 break;
             case "add":
-                // TODO: handle the `add [filename]` command
-                Repository.loadGitletFolder();
+                Repository.loadGitlet();
                 if (args.length < 2) {
                     System.exit(0);
                 }
                 var filename = args[1];
                 Repository.add(filename);
                 break;
+            case "commit":
+                Repository.loadGitlet();
+
+                break;
             default:
-                System.out.println("No command with that name exists.");
+                Utils.message("No command with that name exists.");
                 System.exit(0);
+
         }
+        Repository.storeGitlet();
     }
 
 
