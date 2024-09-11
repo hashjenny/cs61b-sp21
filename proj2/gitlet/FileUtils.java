@@ -21,7 +21,9 @@ public class FileUtils {
         var files = folder.listFiles();
         if (files != null) {
             for (var file : files) {
-                file.delete();
+                if (file.isFile()) {
+                    file.delete();
+                }
             }
         }
     }

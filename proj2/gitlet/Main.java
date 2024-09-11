@@ -1,6 +1,7 @@
 package gitlet;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 /** Driver class for Gitlet, a subset of the Git version-control system.
  *  @author hashjenny
@@ -71,11 +72,33 @@ public class Main {
                     Utils.message("Incorrect operands.");
                     System.exit(0);
                 }
-//                switch (args.length) {
-//                    case 2:
-//
-//                }
 
+                Repository.checkout(Arrays.copyOfRange(args, 1, args.length));
+                break;
+            case "branch":
+                Repository.loadGitlet();
+                if (args.length < 2) {
+                    Utils.message("Incorrect operands.");
+                    System.exit(0);
+                }
+                Repository.branch(args[1]);
+                break;
+            case "rm-branch":
+                Repository.loadGitlet();
+                if (args.length < 2) {
+                    Utils.message("Incorrect operands.");
+                    System.exit(0);
+                }
+                Repository.rmBranch(args[1]);
+                break;
+            case "reset":
+                Repository.loadGitlet();
+                if (args.length < 2) {
+                    Utils.message("Incorrect operands.");
+                    System.exit(0);
+                }
+                Repository.reset(args[1]);
+                break;
             default:
                 Utils.message("No command with that name exists.");
                 System.exit(0);

@@ -6,8 +6,10 @@ import java.util.*;
 
 import static gitlet.Utils.*;
 
-/** Represents a gitlet repository.
- *  @author hashjenny
+/**
+ * Represents a gitlet repository.
+ *
+ * @author hashjenny
  */
 public class Repository {
     /**
@@ -17,9 +19,13 @@ public class Repository {
      * variable is used. We've provided two examples for you.
      */
 
-    /** The current working directory. */
+    /**
+     * The current working directory.
+     */
     public static final File CWD = new File(System.getProperty("user.dir"));
-    /** The .gitlet directory. */
+    /**
+     * The .gitlet directory.
+     */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
 
     // dir
@@ -59,7 +65,7 @@ public class Repository {
         REMOVAL.createNewFile();
     }
 
-    public static void loadGitlet(){
+    public static void loadGitlet() {
         if (!GITLET_DIR.exists()) {
             Utils.message("Not in an initialized Gitlet directory.");
             System.exit(0);
@@ -171,6 +177,24 @@ public class Repository {
         }
     }
 
+    public static void find(String commitMessage) {
+        var files = Utils.plainFilenamesIn(COMMIT);
+        var notMatchFlag = true;
+        if (files != null) {
+            for (var file : files) {
+                var path = Utils.join(COMMIT, file);
+                var commit = Utils.readObject(path, Commit.class);
+                if (commit.message.equals(commitMessage)) {
+                    Utils.message(commit.id);
+                    notMatchFlag = false;
+                }
+            }
+        }
+        if (notMatchFlag) {
+            throw Utils.error("Found no commit with that message.");
+        }
+    }
+
     public static void status() {
         var currentBranchName = Utils.readContentsAsString(CURRENT);
         Utils.message("=== Branches ===");
@@ -208,7 +232,7 @@ public class Repository {
         }
         // Staged for addition, but with different contents than in the working directory;
         // Staged for addition, but deleted in the working directory;
-        for (var entry: addition.entrySet()) {
+        for (var entry : addition.entrySet()) {
             var filename = entry.getKey();
             var id = entry.getValue().id;
 
@@ -222,7 +246,7 @@ public class Repository {
 
         // Not staged for removal, but tracked in the current commit
         // and deleted from the working directory.
-        for (var trackedFile: filesMap.keySet()) {
+        for (var trackedFile : filesMap.keySet()) {
             if (!removal.contains(trackedFile) && !workspace.containsKey(trackedFile)) {
                 Utils.message("%s (deleted)", trackedFile);
             }
@@ -238,6 +262,119 @@ public class Repository {
         }
     }
 
+    public static void checkout(String... args) throws IOException {
+        var len = args.length;
+        if (len == 1) {
+            // java gitlet.Main checkout [branch name]
+            var branchName = args[0];
+            var branchFile = Utils.join(BRANCH, branchName);
+            if (!branchFile.exists()) {
+                Utils.message("No such branch exists.");
+                System.exit(0);
+            }
+
+            if (branchName.equals(currentBranchName)) {
+                Utils.message("No need to checkout the current branch.");
+                System.exit(0);
+            }
+
+            var currentBranchFiles = getFilesMap(head);
+            var workspaceFiles = getWorkspaceFiles();
+            for (var filename : workspaceFiles.keySet()) {
+                if (!currentBranchFiles.containsKey(filename)) {
+                    Utils.message("There is an untracked file in the way; delete it, or add and commit it first.");
+                    System.exit(0);
+                }
+            }
+
+            var id = readContentsAsString(branchFile);
+            var commit = getCommit(id);
+            var checkoutBranchFiles = getFilesMap(commit);
+            FileUtils.deleteAll(CWD);
+            for (var entry : checkoutBranchFiles.entrySet()) {
+                var filename = entry.getKey();
+                var content = getBlob(entry.getValue()).content;
+                var file = Utils.join(CWD, filename);
+                file.createNewFile();
+                Utils.writeContents(file, content);
+            }
+            currentBranch = commit;
+            head = commit;
+
+        } else if (len == 2) {
+            // java gitlet.Main checkout -- [file name]
+            if (!args[0].equals("--")) {
+                Utils.message("Incorrect operands.");
+                System.exit(0);
+            }
+            var filename = args[1];
+            if (!head.files.containsKey(filename)) {
+                throw Utils.error("File does not exist in that commit.");
+            }
+            var blobId = head.files.get(filename);
+            var blob = getBlob(blobId);
+            Utils.writeContents(Utils.join(CWD, blob.filename), blob.content);
+        } else {
+            if (!args[1].equals("--")) {
+                Utils.message("Incorrect operands.");
+                System.exit(0);
+            }
+
+            var id = args[0];
+            var filename = args[2];
+            var commitFiles = Utils.plainFilenamesIn(COMMIT);
+            File commitFile = null;
+            for (var file: commitFiles) {
+                if (file.startsWith(id)) {
+                    commitFile = Utils.join(COMMIT, file);
+                }
+            }
+            if (commitFile == null) {
+                Utils.message("No commit with that id exists.");
+                System.exit(0);
+            }
+
+            var commit = readObject(commitFile, Commit.class);
+            if (!commit.files.containsKey(filename)) {
+                throw Utils.error("File does not exist in that commit.");
+            }
+            var blobId = head.files.get(filename);
+            var blob = getBlob(blobId);
+            var file = Utils.join(CWD, blob.filename);
+            file.createNewFile();
+            Utils.writeContents(file, blob.content);
+        }
+
+    }
+
+    public static void branch(String branchName) {
+        var branchFiles = Utils.plainFilenamesIn(BRANCH);
+        if (branchFiles != null && branchFiles.contains(branchName)) {
+            throw Utils.error("A branch with that name already exists.");
+        }
+        var file = Utils.join(BRANCH, branchName);
+        Utils.writeContents(file, head.id);
+    }
+
+    public static void rmBranch(String branchName) {
+        var branchFile = Utils.join(BRANCH, branchName);
+        if (!branchFile.exists()) {
+            throw Utils.error("A branch with that name does not exist.");
+        }
+
+        if (branchName.equals(currentBranchName)) {
+            throw Utils.error("Cannot remove the current branch.");
+        }
+        branchFile.delete();
+    }
+
+    public static void reset(String commitId) {
+        var commitFile = Utils.join(COMMIT, commitId);
+        if (!commitFile.exists()) {
+            throw Utils.error("A branch with that name does not exist.");
+        }
+    }
+
     private static void printCommit(Commit commit) {
         Utils.message("===");
         Utils.message("commit %s", commit.id);
@@ -247,24 +384,6 @@ public class Repository {
             Utils.message("Merged %s into %s.",
                     getBranchName(commit.id),
                     getBranchName(commit.mergedParentId));
-        }
-    }
-
-    public static void find(String commitMessage) {
-        var files = Utils.plainFilenamesIn(COMMIT);
-        var notMatchFlag = true;
-        if (files != null) {
-            for (var file : files) {
-                var path = Utils.join(COMMIT, file);
-                var commit = Utils.readObject(path, Commit.class);
-                if (commit.message.equals(commitMessage)) {
-                    Utils.message(commit.id);
-                    notMatchFlag = false;
-                }
-            }
-        }
-        if (notMatchFlag) {
-            throw Utils.error("Found no commit with that message.");
         }
     }
 
@@ -370,7 +489,7 @@ public class Repository {
         var map = new HashMap<String, String>();
         var current = commit;
         while (!current.parentId.isEmpty()) {
-            for (var entry: current.files.entrySet()) {
+            for (var entry : current.files.entrySet()) {
                 if (!map.containsKey(entry.getKey()) /* && entry.getValue() != null */) {
                     map.put(entry.getKey(), entry.getValue());
                 }
@@ -384,7 +503,7 @@ public class Repository {
         var workspaceFiles = new HashMap<String, String>();
         var files = Utils.plainFilenamesIn(CWD);
         if (files != null) {
-            for (var file: files) {
+            for (var file : files) {
                 var path = Utils.join(CWD, file);
                 if (path.isFile()) {
                     var content = Utils.readContentsAsString(path);
@@ -394,6 +513,7 @@ public class Repository {
         }
         return workspaceFiles;
     }
+
 
 
 }
