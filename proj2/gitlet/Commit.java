@@ -12,21 +12,14 @@ import java.util.HashMap;
 import java.util.Locale;
 
 /** Represents a gitlet commit object.
- *  TODO: It's a good idea to give a description here of what else this Class
- *  does at a high level.
- *
  *  @author hashjenny
  */
-public class Commit implements Serializable {
+public class Commit implements Serializable, Dumpable {
     /**
-     * TODO: add instance variables here.
-     *
      * List all instance variables of the Commit class here with a useful
      * comment above them describing what that variable represents and how that
      * variable is used. We've provided one example for `message`.
      */
-
-
 
     /** The message of this Commit. */
     public final String id;
@@ -78,4 +71,17 @@ public class Commit implements Serializable {
         this.files.put(fileName, blobId);
     }
 
+    @Override
+    public void dump() {
+        Utils.message("------------------");
+        Utils.message("Commit id: %s", id);
+        Utils.message("Commit parentId: %s", parentId);
+        Utils.message("Commit mergedParentId: %s", mergedParentId);
+        Utils.message("Commit timestamp: %s", timestamp);
+        Utils.message("Commit files: ");
+        for (var entry : files.entrySet()) {
+            Utils.message("    <%s, %s>", entry.getKey(), entry.getValue());
+        }
+        Utils.message("------------------");
+    }
 }

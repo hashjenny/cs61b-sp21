@@ -24,6 +24,7 @@ public class Main {
             case "add":
                 Repository.loadGitlet();
                 if (args.length < 2) {
+                    Utils.message("Incorrect operands.");
                     System.exit(0);
                 }
                 var filename = args[1];
@@ -39,6 +40,7 @@ public class Main {
             case "rm":
                 Repository.loadGitlet();
                 if (args.length < 2) {
+                    Utils.message("Incorrect operands.");
                     System.exit(0);
                 }
                 Repository.rm(args[1]);
@@ -54,10 +56,26 @@ public class Main {
             case "find":
                 Repository.loadGitlet();
                 if (args.length < 2) {
+                    Utils.message("Incorrect operands.");
                     System.exit(0);
                 }
                 Repository.find(args[1]);
                 break;
+            case "status":
+                Repository.loadGitlet();
+                Repository.status();
+                break;
+            case "checkout":
+                Repository.loadGitlet();
+                if (args.length < 2) {
+                    Utils.message("Incorrect operands.");
+                    System.exit(0);
+                }
+//                switch (args.length) {
+//                    case 2:
+//
+//                }
+
             default:
                 Utils.message("No command with that name exists.");
                 System.exit(0);

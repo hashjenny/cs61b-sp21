@@ -6,12 +6,7 @@ import java.util.*;
 
 import static gitlet.Utils.*;
 
-// TODO: any imports you need here
-
 /** Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
- *  does at a high level.
- *
  *  @author hashjenny
  */
 public class Repository {
@@ -42,7 +37,8 @@ public class Repository {
     public static final File REMOVAL = join(STAGING_AREA, "_Removal");
 
     public static Commit head;
-    public static Commit current;
+    public static String currentBranchName;
+    public static Commit currentBranch;
     public static HashMap<String, ArrayList<Commit>> branches = new HashMap<>();
     // filename -> blob
     public static HashMap<String, Blob> addition = new HashMap<>();
@@ -69,7 +65,8 @@ public class Repository {
             System.exit(0);
         }
         head = getCommit(Utils.readContentsAsString(HEAD));
-        current = getLastCommit(Utils.readContentsAsString(CURRENT));
+        currentBranchName = Utils.readContentsAsString(CURRENT);
+        currentBranch = getLastCommit(currentBranchName);
         addition = putAllBlobs(ADDITION);
         removal = FileUtils.readItemsFormFile(REMOVAL);
 
@@ -79,6 +76,7 @@ public class Repository {
 
     public static void storeGitlet() {
         Utils.writeContents(HEAD, head.id);
+        Utils.writeContents(CURRENT, currentBranchName);
         FileUtils.deleteAll(ADDITION);
         FileUtils.writeAllObjects(ADDITION, addition);
         FileUtils.writeItemsToFile(REMOVAL, removal);
@@ -87,7 +85,8 @@ public class Repository {
     public static void init() {
         var initCommit = new Commit("initial commit");
         head = initCommit;
-        current = initCommit;
+        currentBranch = initCommit;
+
         Utils.writeObject(Utils.join(COMMIT, initCommit.id), initCommit);
         Utils.writeContents(Utils.join(BRANCH, "master"), initCommit.id);
         Utils.writeContents(HEAD, head.id);
@@ -128,9 +127,13 @@ public class Repository {
             commit.addFile(removedFile, null);
         }
 
+        head = commit;
+        currentBranch = commit;
+        Utils.writeContents(Utils.join(BRANCH, currentBranchName), currentBranch.id);
+
         FileUtils.copyAll(ADDITION, GITLET_DIR);
         Utils.writeObject(Utils.join(COMMIT, commit.id), commit);
-        head = commit;
+
         addition.clear();
         removal.clear();
     }
@@ -225,15 +228,14 @@ public class Repository {
             }
         }
 
-
+        // present in the working directory but neither staged for addition nor tracked.
+        // This includes files that have been staged for removal
         Utils.message("=== Untracked Files ===");
         for (var filename : workspace.keySet()) {
             if (!filesMap.containsKey(filename) && !addition.containsKey(filename)) {
                 Utils.message("%s", filename);
             }
         }
-
-
     }
 
     private static void printCommit(Commit commit) {
@@ -321,7 +323,7 @@ public class Repository {
     }
 
     public static void switchBranch(String branchName) {
-        Utils.writeContents(BRANCH, branchName);
+        Utils.writeContents(CURRENT, branchName);
     }
 
     public static String getBranchName(String commitId) {
