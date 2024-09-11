@@ -5,6 +5,7 @@ import org.junit.*;
 import java.io.IOException;
 
 import static gitlet.Repository.*;
+import static gitlet.Utils.*;
 
 public class TestGitlet {
 
@@ -20,10 +21,9 @@ public class TestGitlet {
     public void initTest() throws IOException {
         setupGitlet();
         init();
-        var branch = Utils.readObject(Utils.join(BRANCH, "master"), Branch.class);
+        var branch = Utils.readContentsAsString(join(BRANCH, "master"));
         System.out.println("branch---------------");
-        System.out.println(branch.branchName);
-        System.out.println(branch.currentCommitID);
+        System.out.println(branch);
 
         var id = Utils.readContentsAsString(HEAD);
         var commit = getCommit(id);
