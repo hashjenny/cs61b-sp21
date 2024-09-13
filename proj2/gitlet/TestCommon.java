@@ -45,5 +45,8 @@ public class TestCommon {
     }
 
     @Test
-    public void
+    public void writeContentTest() {
+        var file = Utils.join(CWD, "writefile");
+        Utils.writeContents(file, "write");
+    }
 }

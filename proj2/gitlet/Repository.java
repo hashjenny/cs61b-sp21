@@ -255,10 +255,9 @@ public class Repository {
         // present in the working directory but neither staged for addition nor tracked.
         // This includes files that have been staged for removal
         Utils.message("=== Untracked Files ===");
-        for (var filename : workspace.keySet()) {
-            if (!filesMap.containsKey(filename) && !addition.containsKey(filename)) {
-                Utils.message("%s", filename);
-            }
+        var untrackedFiles = getUntrackedFiles(workspace, filesMap);
+        for (var filename: untrackedFiles) {
+            Utils.message("%s", filename);
         }
     }
 
@@ -295,7 +294,6 @@ public class Repository {
                 var filename = entry.getKey();
                 var content = getBlob(entry.getValue()).content;
                 var file = Utils.join(CWD, filename);
-                file.createNewFile();
                 Utils.writeContents(file, content);
             }
             currentBranch = commit;
@@ -315,6 +313,7 @@ public class Repository {
             var blob = getBlob(blobId);
             Utils.writeContents(Utils.join(CWD, blob.filename), blob.content);
         } else {
+            // java gitlet.Main checkout [commit id] -- [file name]
             if (!args[1].equals("--")) {
                 Utils.message("Incorrect operands.");
                 System.exit(0);
@@ -322,18 +321,7 @@ public class Repository {
 
             var id = args[0];
             var filename = args[2];
-            var commitFiles = Utils.plainFilenamesIn(COMMIT);
-            File commitFile = null;
-            for (var file: commitFiles) {
-                if (file.startsWith(id)) {
-                    commitFile = Utils.join(COMMIT, file);
-                }
-            }
-            if (commitFile == null) {
-                Utils.message("No commit with that id exists.");
-                System.exit(0);
-            }
-
+            var commitFile = getFileFromShortenName(id, COMMIT);
             var commit = readObject(commitFile, Commit.class);
             if (!commit.files.containsKey(filename)) {
                 throw Utils.error("File does not exist in that commit.");
@@ -341,11 +329,29 @@ public class Repository {
             var blobId = head.files.get(filename);
             var blob = getBlob(blobId);
             var file = Utils.join(CWD, blob.filename);
-            file.createNewFile();
             Utils.writeContents(file, blob.content);
         }
 
     }
+
+    private static File getFileFromShortenName(String name, File folder) {
+        File targetFile = null;
+        var files = Utils.plainFilenamesIn(folder);
+        if (files != null) {
+            for (var file: files) {
+                if (file.startsWith(name)) {
+                    targetFile = Utils.join(folder, file);
+                }
+            }
+        }
+        if (targetFile == null) {
+            Utils.message("No commit with that id exists.");
+            System.exit(0);
+        }
+        return targetFile;
+    }
+
+
 
     public static void branch(String branchName) {
         var branchFiles = Utils.plainFilenamesIn(BRANCH);
@@ -369,10 +375,10 @@ public class Repository {
     }
 
     public static void reset(String commitId) {
-        var commitFile = Utils.join(COMMIT, commitId);
-        if (!commitFile.exists()) {
-            throw Utils.error("A branch with that name does not exist.");
-        }
+        var commitFile = getFileFromShortenName(commitId, COMMIT);
+        var commit = readObject(commitFile, Commit.class);
+        var filesMap = getFilesMap(commit);
+
     }
 
     private static void printCommit(Commit commit) {
@@ -513,6 +519,17 @@ public class Repository {
         }
         return workspaceFiles;
     }
+
+    public static HashSet<String> getUntrackedFiles(HashMap<String, String> workspaceFiles, HashMap<String, String> currentFilesMap) {
+        var untrackedFiles = new HashSet<String>();
+        for (var filename : workspaceFiles.keySet()) {
+            if (!currentFilesMap.containsKey(filename) && !addition.containsKey(filename)) {
+                untrackedFiles.add(filename);
+            }
+        }
+        return untrackedFiles;
+    }
+
 
 
 
