@@ -50,19 +50,19 @@ public class Repository {
     public static HashMap<String, Blob> addition = new HashMap<>();
     public static HashSet<String> removal = new HashSet<>();
 
-    public static void setupGitlet() throws IOException {
+    public static void setupGitlet()  {
         if (GITLET_DIR.exists()) {
             throw Utils.error("A Gitlet version-control system already exists in the current directory.");
         }
         GITLET_DIR.mkdir();
         COMMIT.mkdir();
         BRANCH.mkdir();
-        HEAD.createNewFile();
-        CURRENT.createNewFile();
+//        HEAD.createNewFile();
+//        CURRENT.createNewFile();
 
         STAGING_AREA.mkdir();
         ADDITION.mkdir();
-        REMOVAL.createNewFile();
+//        REMOVAL.createNewFile();
     }
 
     public static void loadGitlet() {
@@ -99,7 +99,7 @@ public class Repository {
         Utils.writeContents(CURRENT, "master");
     }
 
-    public static void add(String filename) throws IOException {
+    public static void add(String filename) {
         if (!Utils.join(CWD, filename).exists()) {
             throw Utils.error("File does not exist.");
         }
@@ -118,7 +118,7 @@ public class Repository {
         addition.put(blob.filename, blob);
     }
 
-    public static void commit(String msg) throws IOException {
+    public static void commit(String msg) {
         if (addition.isEmpty() && removal.isEmpty()) {
             Utils.message("No changes added to the commit.");
             System.exit(0);
@@ -256,12 +256,12 @@ public class Repository {
         // This includes files that have been staged for removal
         Utils.message("=== Untracked Files ===");
         var untrackedFiles = getUntrackedFiles(workspace, filesMap);
-        for (var filename: untrackedFiles) {
+        for (var filename : untrackedFiles) {
             Utils.message("%s", filename);
         }
     }
 
-    public static void checkout(String... args) throws IOException {
+    public static void checkout(String... args) {
         var len = args.length;
         if (len == 1) {
             // java gitlet.Main checkout [branch name]
@@ -279,23 +279,19 @@ public class Repository {
 
             var currentBranchFiles = getFilesMap(head);
             var workspaceFiles = getWorkspaceFiles();
-            for (var filename : workspaceFiles.keySet()) {
-                if (!currentBranchFiles.containsKey(filename)) {
-                    Utils.message("There is an untracked file in the way; delete it, or add and commit it first.");
-                    System.exit(0);
-                }
-            }
-
+            checkUntrackedFile(workspaceFiles, currentBranchFiles);
+//            for (var filename : workspaceFiles.keySet()) {
+//                if (!currentBranchFiles.containsKey(filename)) {
+//                    Utils.message("There is an untracked file in the way; delete it, or add and commit it first.");
+//                    System.exit(0);
+//                }
+//            }
+            
             var id = readContentsAsString(branchFile);
             var commit = getCommit(id);
             var checkoutBranchFiles = getFilesMap(commit);
             FileUtils.deleteAll(CWD);
-            for (var entry : checkoutBranchFiles.entrySet()) {
-                var filename = entry.getKey();
-                var content = getBlob(entry.getValue()).content;
-                var file = Utils.join(CWD, filename);
-                Utils.writeContents(file, content);
-            }
+            FileUtils.writeAllContentFiles(CWD, checkoutBranchFiles);
             currentBranch = commit;
             head = commit;
 
@@ -321,8 +317,7 @@ public class Repository {
 
             var id = args[0];
             var filename = args[2];
-            var commitFile = getFileFromShortenName(id, COMMIT);
-            var commit = readObject(commitFile, Commit.class);
+            var commit = getCommitFromShortenName(id);
             if (!commit.files.containsKey(filename)) {
                 throw Utils.error("File does not exist in that commit.");
             }
@@ -333,25 +328,6 @@ public class Repository {
         }
 
     }
-
-    private static File getFileFromShortenName(String name, File folder) {
-        File targetFile = null;
-        var files = Utils.plainFilenamesIn(folder);
-        if (files != null) {
-            for (var file: files) {
-                if (file.startsWith(name)) {
-                    targetFile = Utils.join(folder, file);
-                }
-            }
-        }
-        if (targetFile == null) {
-            Utils.message("No commit with that id exists.");
-            System.exit(0);
-        }
-        return targetFile;
-    }
-
-
 
     public static void branch(String branchName) {
         var branchFiles = Utils.plainFilenamesIn(BRANCH);
@@ -375,12 +351,35 @@ public class Repository {
     }
 
     public static void reset(String commitId) {
-        var commitFile = getFileFromShortenName(commitId, COMMIT);
-        var commit = readObject(commitFile, Commit.class);
-        var filesMap = getFilesMap(commit);
+        var commit = getCommitFromShortenName(commitId);
+        var commitFilesMap = getFilesMap(commit);
+        checkUntrackedFile(getWorkspaceFiles(), commitFilesMap);
+
+        FileUtils.deleteAll(CWD);
+        FileUtils.writeAllContentFiles(CWD, commitFilesMap);
+
+        addition.clear();
+        removal.clear();
+        head = commit;
+        currentBranch = commit;
+    }
+
+    public static void merge(String givenBranchName) {
+        var givenBranchFile = Utils.join(BRANCH, givenBranchName);
+        if (!givenBranchFile.exists()) {
+            throw Utils.error("A branch with that name does not exist.");
+        }
+        if (givenBranchName.equals(currentBranchName)) {
+            throw Utils.error("Cannot merge a branch with itself.");
+        }
+        if (!addition.isEmpty() || !removal.isEmpty()) {
+            throw Utils.error("You have uncommitted changes.");
+        }
+        var workspaceFiles = getWorkspaceFiles();
 
     }
 
+    // print utils
     private static void printCommit(Commit commit) {
         Utils.message("===");
         Utils.message("commit %s", commit.id);
@@ -388,11 +387,12 @@ public class Repository {
         Utils.message(commit.message);
         if (!commit.mergedParentId.isEmpty()) {
             Utils.message("Merged %s into %s.",
-                    getBranchName(commit.id),
-                    getBranchName(commit.mergedParentId));
+                    getBranchNameByCommitId(commit.id),
+                    getBranchNameByCommitId(commit.mergedParentId));
         }
     }
 
+    // blob utils
     private static Blob getLastBlob(String filename) {
         String blobId = "";
         var commit = head;
@@ -419,6 +419,19 @@ public class Repository {
         return Utils.sha1(filename, content);
     }
 
+    public static HashMap<String, Blob> putAllBlobs(File folder) {
+        var target = new HashMap<String, Blob>();
+        var files = Utils.plainFilenamesIn(folder);
+        if (files != null) {
+            for (var f : files) {
+                var blob = Utils.readObject(Utils.join(folder, f), Blob.class);
+                target.put(blob.filename, blob);
+            }
+        }
+        return target;
+    }
+
+    // commit utils
     public static Commit getCommit(String id) {
         if (id.isEmpty()) {
             return null;
@@ -435,23 +448,25 @@ public class Repository {
         return getCommit(id);
     }
 
-    public static HashMap<String, Blob> putAllBlobs(File folder) {
-        var target = new HashMap<String, Blob>();
-        var files = Utils.plainFilenamesIn(folder);
+    private static Commit getCommitFromShortenName(String name) {
+        File targetFile = null;
+        var files = Utils.plainFilenamesIn(COMMIT);
         if (files != null) {
-            for (var f : files) {
-                var blob = Utils.readObject(Utils.join(folder, f), Blob.class);
-                target.put(blob.filename, blob);
+            for (var file : files) {
+                if (file.startsWith(name)) {
+                    targetFile = Utils.join(COMMIT, file);
+                }
             }
         }
-        return target;
+        if (targetFile == null) {
+            Utils.message("No commit with that id exists.");
+            System.exit(0);
+        }
+        return readObject(targetFile, Commit.class);
     }
 
-    public static void switchBranch(String branchName) {
-        Utils.writeContents(CURRENT, branchName);
-    }
-
-    public static String getBranchName(String commitId) {
+    // branch utils
+    public static String getBranchNameByCommitId(String commitId) {
         for (var entry : branches.entrySet()) {
             var branchName = entry.getKey();
             var branch = entry.getValue();
@@ -491,6 +506,8 @@ public class Repository {
         }
     }
 
+    // file utils
+    // HashMap file => filename, blobId
     public static HashMap<String, String> getFilesMap(Commit commit) {
         var map = new HashMap<String, String>();
         var current = commit;
@@ -505,6 +522,7 @@ public class Repository {
         return map;
     }
 
+    // HashMap file => filename, blobId
     public static HashMap<String, String> getWorkspaceFiles() {
         var workspaceFiles = new HashMap<String, String>();
         var files = Utils.plainFilenamesIn(CWD);
@@ -520,6 +538,7 @@ public class Repository {
         return workspaceFiles;
     }
 
+    // HashSet file => filename
     public static HashSet<String> getUntrackedFiles(HashMap<String, String> workspaceFiles, HashMap<String, String> currentFilesMap) {
         var untrackedFiles = new HashSet<String>();
         for (var filename : workspaceFiles.keySet()) {
@@ -530,7 +549,14 @@ public class Repository {
         return untrackedFiles;
     }
 
-
+    public static void checkUntrackedFile(HashMap<String, String> workspaceFiles, HashMap<String, String> filesMap) {
+        for (var filename : workspaceFiles.keySet()) {
+            if (!filesMap.containsKey(filename)) {
+                Utils.message("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.exit(0);
+            }
+        }
+    }
 
 
 }

@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import static gitlet.Repository.*;
 import static gitlet.Utils.join;
 import static gitlet.Utils.writeObject;
 
@@ -28,13 +29,17 @@ public class FileUtils {
         }
     }
 
-    public static void copy(File sourceFolder, File targetFolder, String filename) throws IOException {
+    public static void copy(File sourceFolder, File targetFolder, String filename) {
         var source = join(sourceFolder, filename);
         var target = join(targetFolder, filename);
-        Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        try {
+            Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static void copyAll(File sourceFolder, File targetFolder) throws IOException {
+    public static void copyAll(File sourceFolder, File targetFolder) {
         var files = Utils.plainFilenamesIn(sourceFolder);
         if (files != null) {
             for (var file : files) {
@@ -63,6 +68,15 @@ public class FileUtils {
         for (var entry: map.entrySet()) {
             var blob = entry.getValue();
             Utils.writeObject(Utils.join(folder, blob.id), blob);
+        }
+    }
+
+    public static void writeAllContentFiles(File folder, HashMap<String, String> filesMap) {
+        for (var entry : filesMap.entrySet()) {
+            var filename = entry.getKey();
+            var content = getBlob(entry.getValue()).content;
+            var file = Utils.join(folder, filename);
+            Utils.writeContents(file, content);
         }
     }
 }
