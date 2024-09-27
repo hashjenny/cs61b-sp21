@@ -49,11 +49,13 @@ public class FileUtils {
     }
 
     public static HashSet<String> readItemsFormFile(File file) {
-        var content = Utils.readContentsAsString(file);
-        var arr = content.split("<<<");
         HashSet<String> set = new HashSet<>();
-        if (!arr[0].isEmpty()) {
-            set = new HashSet<>(Arrays.asList(arr));
+        if (file.exists()) {
+            var content = Utils.readContentsAsString(file);
+            var arr = content.split("<<<");
+            if (!arr[0].isEmpty()) {
+                set = new HashSet<>(Arrays.asList(arr));
+            }
         }
         return set;
     }
@@ -61,7 +63,9 @@ public class FileUtils {
     public static void writeItemsToFile(File file, HashSet<String> set) {
         var arr = set.toArray(new String[0]);
         var content = String.join("<<<", arr);
-        Utils.writeContents(file, content);
+        if (!content.isEmpty()) {
+            Utils.writeContents(file, content);
+        }
     }
 
     public static void writeAllObjects(File folder, HashMap<String, Blob> map) {

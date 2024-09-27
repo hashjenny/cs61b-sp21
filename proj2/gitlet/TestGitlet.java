@@ -30,6 +30,7 @@ public class TestGitlet {
         System.out.println("commit---------------");
         System.out.println(commit.id);
         System.out.println(commit.parentId);
+        storeGitlet();
     }
 
 }

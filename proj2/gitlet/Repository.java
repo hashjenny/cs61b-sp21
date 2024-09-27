@@ -36,11 +36,9 @@ public class Repository {
     // dir
     public static final File BRANCH = join(GITLET_DIR, "_Branch");
     // dir
-    public static final File STAGING_AREA = join(GITLET_DIR, "_StagingArea");
-    // dir
-    public static final File ADDITION = join(STAGING_AREA, "_Addition");
+    public static final File ADDITION = join(GITLET_DIR, "_Addition");
     // file
-    public static final File REMOVAL = join(STAGING_AREA, "_Removal");
+    public static final File REMOVAL = join(GITLET_DIR, "_Removal");
 
     public static Commit head;
     public static String currentBranchName;
@@ -60,7 +58,6 @@ public class Repository {
 //        HEAD.createNewFile();
 //        CURRENT.createNewFile();
 
-        STAGING_AREA.mkdir();
         ADDITION.mkdir();
 //        REMOVAL.createNewFile();
     }
@@ -92,6 +89,7 @@ public class Repository {
         var initCommit = new Commit("initial commit");
         head = initCommit;
         currentBranch = initCommit;
+        currentBranchName = "master";
 
         Utils.writeObject(Utils.join(COMMIT, initCommit.id), initCommit);
         Utils.writeContents(Utils.join(BRANCH, "master"), initCommit.id);
