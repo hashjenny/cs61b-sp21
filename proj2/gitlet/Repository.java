@@ -72,6 +72,7 @@ public class Repository {
         currentBranch = getLastCommit(currentBranchName);
         addition = putAllBlobs(ADDITION);
         removal = FileUtils.readItemsFormFile(REMOVAL);
+//        readItemsFormREMOVAL(REMOVAL);
 
         // load all branches as HashMap (branchName -> branch(commit list))
         getAllBranches();
@@ -319,7 +320,7 @@ public class Repository {
             if (!commit.files.containsKey(filename)) {
                 throw Utils.error("File does not exist in that commit.");
             }
-            var blobId = head.files.get(filename);
+            var blobId = commit.files.get(filename);
             var blob = getBlob(blobId);
             var file = Utils.join(CWD, blob.filename);
             Utils.writeContents(file, blob.content);
@@ -388,6 +389,7 @@ public class Repository {
                     getBranchNameByCommitId(commit.id),
                     getBranchNameByCommitId(commit.mergedParentId));
         }
+        Utils.message("");
     }
 
     // blob utils
@@ -556,5 +558,13 @@ public class Repository {
         }
     }
 
-
+    public static void readItemsFormREMOVAL(File file) {
+        if (file.exists()) {
+            var content = Utils.readContentsAsString(file);
+            var arr = content.split("<<<");
+            if (!arr[0].isEmpty()) {
+                removal = new HashSet<>(Arrays.asList(arr));
+            }
+        }
+    }
 }
