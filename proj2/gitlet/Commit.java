@@ -53,7 +53,7 @@ public class Commit implements Serializable, Dumpable {
         // 将Instant对象转换为当前时区的ZonedDateTime对象
         ZonedDateTime zonedDateTime = unixEpoch.atZone(currentZoneId);
         // 创建DateTimeFormatter对象，并指定英文语言环境
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE MMM d HH:mm:ss yyyy XX", Locale.US);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE MMM d HH:mm:ss yyyy XXXX", Locale.US);
         this.timestamp = zonedDateTime.format(formatter);
 
         var sha1Items = new ArrayList<String>();
