@@ -380,9 +380,10 @@ public class Repository {
 
     public static void reset(String commitId) {
         var commit = getCommitFromShortenName(commitId);
-        var commitFilesMap = getFilesMap(commit);
-        checkUntrackedFile(getWorkspaceFiles(), commitFilesMap);
+        var currentBranchFiles = getFilesMap(head);
+        checkUntrackedFile(getWorkspaceFiles(), currentBranchFiles);
 
+        var commitFilesMap = getFilesMap(commit);
         FileUtils.deleteAll(CWD);
         FileUtils.writeAllContentFiles(CWD, commitFilesMap);
 
