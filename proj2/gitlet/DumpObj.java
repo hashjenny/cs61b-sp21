@@ -31,9 +31,11 @@ public class DumpObj {
 
     /** Deserialize and apply dump to the contents of each of the files
      *  in FILES. */
-    public static void main(String... files) {
-        for (String fileName : files) {
-            Dumpable obj = Utils.readObject(new File(fileName),
+    public static void main(String... args) {
+        var path = "E:\\0.CSLectures\\cs61b\\cs61b-sp21\\proj2\\testing\\test20-status-after-commit_1\\.gitlet\\_Commit";
+        var files = new File(path).listFiles();
+        for (var file : files) {
+            Dumpable obj = Utils.readObject(file,
                                             Dumpable.class);
             obj.dump();
             System.out.println("---");

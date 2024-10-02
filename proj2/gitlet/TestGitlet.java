@@ -12,13 +12,16 @@ public class TestGitlet {
     @Before
     public void setup() throws IOException, InterruptedException {
         Process process = Runtime.getRuntime().exec(
-                new String[]{"powershell.exe", "-Command", "Remove-Item -Path .gitlet -Recurse -Force"});
+                new String[]{
+                        "powershell.exe",
+                        "-Command",
+                        "Remove-Item -Path .gitlet -Recurse -Force"});
         process.waitFor();
     }
 
 
     @Test
-    public void initTest() throws IOException {
+    public void initTest(){
         setupGitlet();
         init();
         var branch = Utils.readContentsAsString(join(BRANCH, "master"));
@@ -28,8 +31,8 @@ public class TestGitlet {
         var id = Utils.readContentsAsString(HEAD);
         var commit = getCommit(id);
         System.out.println("commit---------------");
-        System.out.println(commit.id);
-        System.out.println(commit.parentId);
+        System.out.println(commit.getId());
+        System.out.println(commit.getParentId());
         storeGitlet();
     }
 

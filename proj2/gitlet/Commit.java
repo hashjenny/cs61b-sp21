@@ -1,7 +1,5 @@
 package gitlet;
 
-// TODO: any imports you need here
-
 import java.io.Serializable;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -22,13 +20,13 @@ public class Commit implements Serializable, Dumpable {
      */
 
     /** The message of this Commit. */
-    public final String id;
-    public final String message;
-    public final String timestamp;
-    public final String parentId;
-    public final String mergedParentId;
+    private final String id;
+    private final String message;
+    private final String timestamp;
+    private final String parentId;
+    private final String mergedParentId;
     // file: filename -> blobId
-    public HashMap<String, String> files;
+    private final HashMap<String, String> files;
 
     // for "gitlet init"
     public Commit(String message) {
@@ -53,7 +51,8 @@ public class Commit implements Serializable, Dumpable {
         // 将Instant对象转换为当前时区的ZonedDateTime对象
         ZonedDateTime zonedDateTime = unixEpoch.atZone(currentZoneId);
         // 创建DateTimeFormatter对象，并指定英文语言环境
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE MMM d HH:mm:ss yyyy xx", Locale.US);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
+                "EEE MMM d HH:mm:ss yyyy xx", Locale.US);
         this.timestamp = zonedDateTime.format(formatter);
 
         var sha1Items = new ArrayList<String>();
@@ -83,5 +82,29 @@ public class Commit implements Serializable, Dumpable {
             Utils.message("    <%s, %s>", entry.getKey(), entry.getValue());
         }
         Utils.message("------------------");
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public String getParentId() {
+        return parentId;
+    }
+
+    public String getMergedParentId() {
+        return mergedParentId;
+    }
+
+    public HashMap<String, String> getFiles() {
+        return files;
     }
 }

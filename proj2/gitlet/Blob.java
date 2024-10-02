@@ -4,14 +4,26 @@ import java.io.File;
 import java.io.Serializable;
 
 public class Blob implements Serializable, Dumpable {
-    public final String id;
-    public final String filename;
-    public final String content;
+    private final String id;
+    private final String filename;
+    private final String content;
 
     public Blob(String filename) {
         this.filename = filename;
         this.content = Utils.readContentsAsString(new File(filename));
         this.id = Repository.calcBlobId(filename, content);
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getFilename() {
+        return filename;
+    }
+
+    public String getContent() {
+        return content;
     }
 
     @Override

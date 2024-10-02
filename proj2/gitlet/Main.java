@@ -1,6 +1,5 @@
 package gitlet;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 /** Driver class for Gitlet, a subset of the Git version-control system.

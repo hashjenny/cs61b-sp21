@@ -5,12 +5,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.HashSet;
 
 import static gitlet.Repository.*;
 import static gitlet.Utils.join;
-import static gitlet.Utils.writeObject;
 
 public class FileUtils {
     public static void delete(File folder, String filename) {
@@ -61,24 +60,23 @@ public class FileUtils {
     }
 
     public static void writeItemsToFile(File file, HashSet<String> set) {
+        // if set.size() == 0, then arr is `String[0] {  }`, content is `""`
         var arr = set.toArray(new String[0]);
         var content = String.join("<<<", arr);
-        if (!content.isEmpty()) {
-            Utils.writeContents(file, content);
-        }
+        Utils.writeContents(file, content);
     }
 
-    public static void writeAllObjects(File folder, HashMap<String, Blob> map) {
+    public static void writeAllObjects(File folder, TreeMap<String, Blob> map) {
         for (var entry: map.entrySet()) {
             var blob = entry.getValue();
-            Utils.writeObject(Utils.join(folder, blob.id), blob);
+            Utils.writeObject(Utils.join(folder, blob.getId()), blob);
         }
     }
 
-    public static void writeAllContentFiles(File folder, HashMap<String, String> filesMap) {
+    public static void writeAllContentFiles(File folder, TreeMap<String, String> filesMap) {
         for (var entry : filesMap.entrySet()) {
             var filename = entry.getKey();
-            var content = getBlob(entry.getValue()).content;
+            var content = getBlob(entry.getValue()).getContent();
             var file = Utils.join(folder, filename);
             Utils.writeContents(file, content);
         }
