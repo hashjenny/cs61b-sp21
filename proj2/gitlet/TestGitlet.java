@@ -21,7 +21,7 @@ public class TestGitlet {
 
 
     @Test
-    public void initTest(){
+    public void initTest() {
         setupGitlet();
         init();
         var branch = Utils.readContentsAsString(join(BRANCH, "master"));

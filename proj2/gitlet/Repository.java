@@ -47,7 +47,7 @@ public class Repository {
     private static TreeMap<String, Blob> addition = new TreeMap<>();
     private static HashSet<String> removal = new HashSet<>();
 
-    public static void setupGitlet()  {
+    public static void setupGitlet() {
         if (GITLET_DIR.exists()) {
             Utils.message("A Gitlet version-control system already exists in the current directory.");
             System.exit(0);
@@ -72,7 +72,6 @@ public class Repository {
         currentBranch = getLastCommit(currentBranchName);
         addition = putAllBlobs(ADDITION);
         removal = FileUtils.readItemsFormFile(REMOVAL);
-//        readItemsFormREMOVAL(REMOVAL);
 
         // load all branches as TreeMap (branchName -> branch(commit list))
         getAllBranches();
@@ -107,20 +106,10 @@ public class Repository {
         var blob = new Blob(filename);
 
         var lastBlob = getLastBlob(filename);
-//        if (lastBlob != null) {
-//            if (lastBlob.getContent().equals(blob.getContent())) {
-//                addition.remove(filename);
-////                FileUtils.delete(ADDITION, blob.getId());
-//            } else {
-//                addition.put(filename, blob);
-//            }
-//        } else {
-//            addition.put(filename, blob);
-//        }
         if (lastBlob != null
-            && lastBlob.getContent().equals(blob.getContent())) {
-                addition.remove(filename);
-            } else {
+                && lastBlob.getContent().equals(blob.getContent())) {
+            addition.remove(filename);
+        } else {
             addition.put(filename, blob);
         }
         removal.remove(filename);
@@ -131,7 +120,8 @@ public class Repository {
         if (msg.isEmpty()) {
             Utils.message("Please enter a commit message.");
             System.exit(0);
-        }if (addition.isEmpty() && removal.isEmpty()) {
+        }
+        if (addition.isEmpty() && removal.isEmpty()) {
             Utils.message("No changes added to the commit.");
             System.exit(0);
         }
@@ -309,13 +299,14 @@ public class Repository {
 //                    System.exit(0);
 //                }
 //            }
-            
+
             var id = readContentsAsString(branchFile);
             var commit = getCommit(id);
             var checkoutBranchFiles = getFilesMap(commit);
             FileUtils.deleteAll(CWD);
             FileUtils.writeAllContentFiles(CWD, checkoutBranchFiles);
             currentBranch = commit;
+            currentBranchName = branchName;
             head = commit;
 
         } else if (len == 2) {
