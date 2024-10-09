@@ -404,6 +404,7 @@ public class Repository {
         var conflictFlag = false;
         var givenBranchCommit = branches.get(givenBranchName).get(0);
         var commonAncestor = getCommonAncestor(givenBranchName);
+        checkUntrackedFile();
         if (commonAncestor == null) {
             return;
         } else if (commonAncestor.getId().equals(givenBranchCommit.getId())) {
@@ -415,9 +416,7 @@ public class Repository {
             // If the split point is the current branch,
             // then the effect is to check out the given branch
             var givenBranchFiles = getFilesMap(givenBranchCommit);
-            var currentBranchFiles = getFilesMap(head);
-            var workspaceFiles = getWorkspaceFiles();
-            checkUntrackedFile(workspaceFiles, currentBranchFiles);
+
             FileUtils.deleteAll(CWD);
             FileUtils.writeAllContentFiles(CWD, givenBranchFiles);
             currentBranch = givenBranchCommit;
@@ -432,7 +431,7 @@ public class Repository {
         var workspaceFiles = getWorkspaceFiles();
         var commonAncestorFiles = getFilesMap(commonAncestor);
 
-        var bothSet = new TreeSet<String>(currentBranchFiles.keySet());
+        var bothSet = new TreeSet<>(currentBranchFiles.keySet());
         bothSet.retainAll(givenBranchFiles.keySet());
         var uniqueCurrentSet = new TreeSet<String>(currentBranchFiles.keySet());
         uniqueCurrentSet.removeAll(givenBranchFiles.keySet());
@@ -823,11 +822,35 @@ public class Repository {
 
     private static void checkUntrackedFile(TreeMap<String, String> workspaceFiles, TreeMap<String, String> filesMap) {
         for (var filename : workspaceFiles.keySet()) {
-            if (!filesMap.containsKey(filename)) {
+            if (!filesMap.containsKey(filename)
+                    || !workspaceFiles.get(filename).equals(filesMap.get(filename))) {
                 Utils.message("There is an untracked file in the way; delete it, or add and commit it first.");
                 System.exit(0);
             }
         }
     }
+
+    private static void checkUntrackedFile() {
+        var workspaceFiles = getWorkspaceFiles();
+        var currentFiles = getFilesMap(currentBranch);
+        for (var filename : workspaceFiles.keySet()) {
+            if (!currentFiles.containsKey(filename)
+                    || !workspaceFiles.get(filename).equals(currentFiles.get(filename))) {
+                Utils.message("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.exit(0);
+            }
+        }
+    }
+
+//    private static void checkUncommitted() {
+//        var workspaceFiles = getWorkspaceFiles();
+//        var currentFiles = getFilesMap(currentBranch);
+//        for (var filename : workspaceFiles.keySet()) {
+//            if (!workspaceFiles.get(filename).equals(currentFiles.get(filename))) {
+//                Utils.message("You have uncommitted changes.");
+//                System.exit(0);
+//            }
+//        }
+//    }
 
 }

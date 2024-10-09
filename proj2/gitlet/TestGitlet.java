@@ -112,4 +112,72 @@ public class TestGitlet {
 
     }
 
+    @Test
+    public void test36() {
+        setupGitlet();
+        init();
+        Utils.writeContents(Utils.join(CWD, "f.txt"), "wug");
+        Utils.writeContents(Utils.join(CWD, "g.txt"), "nonwug");
+
+        loadGitlet();
+        add("f.txt");
+        storeGitlet();
+
+        loadGitlet();
+        add("g.txt");
+        storeGitlet();
+
+        loadGitlet();
+        commit("Two files");
+        storeGitlet();
+
+        loadGitlet();
+        branch("other");
+        storeGitlet();
+
+        Utils.writeContents(Utils.join(CWD, "h.txt"), "wug2");
+        loadGitlet();
+        add("h.txt");
+        storeGitlet();
+
+        loadGitlet();
+        rm("g.txt");
+        storeGitlet();
+
+        loadGitlet();
+        commit("Add h.txt and remove g.txt");
+        storeGitlet();
+
+        loadGitlet();
+        checkout("other");
+        storeGitlet();
+
+        loadGitlet();
+        rm("f.txt");
+        storeGitlet();
+
+        Utils.writeContents(Utils.join(CWD, "k.txt"), "wug3");
+        loadGitlet();
+        add("k.txt");
+        storeGitlet();
+
+        loadGitlet();
+        commit("Add k.txt and remove f.txt");
+        storeGitlet();
+
+        loadGitlet();
+        checkout("master");
+        storeGitlet();
+
+        Utils.writeContents(Utils.join(CWD, "k.txt"), "wug");
+
+        loadGitlet();
+        merge("other");
+        storeGitlet();
+
+        loadGitlet();
+        log();
+        storeGitlet();
+
+    }
 }
