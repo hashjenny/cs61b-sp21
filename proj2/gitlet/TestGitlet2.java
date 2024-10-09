@@ -17,7 +17,7 @@ public class TestGitlet2 {
     @Test
     public void addTest1() throws IOException {
         loadGitlet();
-        add("gitlet-design.md");
+        add("temp/gitlet-design.md");
         storeGitlet();
     }
 

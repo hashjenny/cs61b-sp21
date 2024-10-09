@@ -74,6 +74,7 @@ public class Commit implements Serializable, Dumpable {
     public void dump() {
         Utils.message("------------------");
         Utils.message("Commit id: %s", id);
+        Utils.message("Commit message: %s", message);
         Utils.message("Commit parentId: %s", parentId);
         Utils.message("Commit mergedParentId: %s", mergedParentId);
         Utils.message("Commit timestamp: %s", timestamp);

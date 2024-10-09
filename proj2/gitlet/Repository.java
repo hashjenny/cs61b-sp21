@@ -42,7 +42,7 @@ public class Repository {
     private static Commit head;
     private static String currentBranchName;
     private static Commit currentBranch;
-    private static TreeMap<String, ArrayList<Commit>> branches = new TreeMap<>();
+    private static final TreeMap<String, ArrayList<Commit>> branches = new TreeMap<>();
     // filename -> blob
     private static TreeMap<String, Blob> addition = new TreeMap<>();
     private static HashSet<String> removal = new HashSet<>();
@@ -55,11 +55,7 @@ public class Repository {
         GITLET_DIR.mkdir();
         COMMIT.mkdir();
         BRANCH.mkdir();
-//        HEAD.createNewFile();
-//        CURRENT.createNewFile();
-
         ADDITION.mkdir();
-//        REMOVAL.createNewFile();
     }
 
     public static void loadGitlet() {
@@ -69,7 +65,7 @@ public class Repository {
         }
         head = getCommit(Utils.readContentsAsString(HEAD));
         currentBranchName = Utils.readContentsAsString(CURRENT);
-        currentBranch = getLastCommit(currentBranchName);
+        currentBranch = getBranchCommit(currentBranchName);
         addition = putAllBlobs(ADDITION);
         removal = FileUtils.readItemsFormFile(REMOVAL);
 
@@ -134,6 +130,7 @@ public class Repository {
         }
         for (var removedFile : removal) {
             commit.addFile(removedFile, null);
+            Utils.join(CWD, removedFile).delete();
         }
 
         head = commit;
@@ -201,7 +198,6 @@ public class Repository {
     }
 
     public static void status() {
-        var currentBranchName = Utils.readContentsAsString(CURRENT);
         Utils.message("=== Branches ===");
         for (var branchName : branches.keySet()) {
             if (branchName.equals(currentBranchName)) {
@@ -293,12 +289,6 @@ public class Repository {
             var currentBranchFiles = getFilesMap(head);
             var workspaceFiles = getWorkspaceFiles();
             checkUntrackedFile(workspaceFiles, currentBranchFiles);
-//            for (var filename : workspaceFiles.keySet()) {
-//                if (!currentBranchFiles.containsKey(filename)) {
-//                    Utils.message("There is an untracked file in the way; delete it, or add and commit it first.");
-//                    System.exit(0);
-//                }
-//            }
 
             var id = readContentsAsString(branchFile);
             var commit = getCommit(id);
@@ -385,8 +375,21 @@ public class Repository {
     }
 
     public static void merge(String givenBranchName) {
-        var givenBranchFile = Utils.join(BRANCH, givenBranchName);
-        if (!givenBranchFile.exists()) {
+//        var givenBranchFile = Utils.join(BRANCH, givenBranchName);
+//        if (!givenBranchFile.exists()) {
+//            Utils.message("A branch with that name does not exist.");
+//            System.exit(0);
+//        }
+//        if (givenBranchName.equals(currentBranchName)) {
+//            Utils.message("Cannot merge a branch with itself.");
+//            System.exit(0);
+//        }
+//        if (!addition.isEmpty() || !removal.isEmpty()) {
+//            Utils.message("You have uncommitted changes.");
+//            System.exit(0);
+//        }
+//        var givenBranchCommit = getCommit(Utils.readContentsAsString(givenBranchFile));
+        if (!branches.containsKey(givenBranchName)) {
             Utils.message("A branch with that name does not exist.");
             System.exit(0);
         }
@@ -398,21 +401,248 @@ public class Repository {
             Utils.message("You have uncommitted changes.");
             System.exit(0);
         }
+        var conflictFlag = false;
+        var givenBranchCommit = branches.get(givenBranchName).get(0);
+        var commonAncestor = getCommonAncestor(givenBranchName);
+        if (commonAncestor == null) {
+            return;
+        } else if (commonAncestor.getId().equals(givenBranchCommit.getId())) {
+            // if the split point is the same commit as the given branch,
+            // then we do nothing; the merge is complete
+            Utils.message("Given branch is an ancestor of the current branch.");
+            System.exit(0);
+        } else if (commonAncestor.getId().equals(head.getId())) {
+            // If the split point is the current branch,
+            // then the effect is to check out the given branch
+            var givenBranchFiles = getFilesMap(givenBranchCommit);
+            var currentBranchFiles = getFilesMap(head);
+            var workspaceFiles = getWorkspaceFiles();
+            checkUntrackedFile(workspaceFiles, currentBranchFiles);
+            FileUtils.deleteAll(CWD);
+            FileUtils.writeAllContentFiles(CWD, givenBranchFiles);
+            currentBranch = givenBranchCommit;
+            currentBranchName = givenBranchName;
+            head = givenBranchCommit;
+            Utils.message("Current branch fast-forwarded.");
+            System.exit(0);
+        }
+
+        var givenBranchFiles = getFilesMap(givenBranchCommit, commonAncestor);
+        var currentBranchFiles = getFilesMap(head, commonAncestor);
         var workspaceFiles = getWorkspaceFiles();
+        var commonAncestorFiles = getFilesMap(commonAncestor);
+
+        var bothSet = new TreeSet<String>(currentBranchFiles.keySet());
+        bothSet.retainAll(givenBranchFiles.keySet());
+        var uniqueCurrentSet = new TreeSet<String>(currentBranchFiles.keySet());
+        uniqueCurrentSet.removeAll(givenBranchFiles.keySet());
+        var uniqueGivenSet = new TreeSet<String>(givenBranchFiles.keySet());
+        uniqueGivenSet.removeAll(currentBranchFiles.keySet());
+
+        for (var filename : bothSet) {
+            var currentFile = currentBranchFiles.get(filename);
+            var givenFile = givenBranchFiles.get(filename);
+            if (currentFile == null && givenFile == null) {
+                // were both removed
+            } else if (currentFile != null && currentFile.equals(givenFile)) {
+                // both files now have the same content
+            } else {
+                // conflict
+                // 1. both changed
+                // 2. current changed, given deleted
+                // 3. given changed, current deleted
+                var sb = new StringBuilder();
+                String currentContent = "";
+                String givenContent = "";
+                if (currentFile != null) {
+                    var currentBlob = Utils.readObject(Utils.join(GITLET_DIR, currentFile), Blob.class);
+                    currentContent = currentBlob.getContent();
+                }
+                if (givenFile != null) {
+                    var givenBlob = Utils.readObject(Utils.join(GITLET_DIR, givenFile), Blob.class);
+                    givenContent = givenBlob.getContent();
+                }
+                sb.append("<<<<<<< HEAD\n")
+                        .append(currentContent)
+                        .append("=======\n")
+                        .append(givenContent)
+                        .append(">>>>>>>");
+                var content = sb.toString();
+                Utils.writeContents(Utils.join(CWD, filename), content);
+
+                var blob = new Blob(filename);
+                addition.put(filename, blob);
+                conflictFlag = true;
+            }
+        }
+
+//        for (var filename : uniqueCurrentSet) {
+//            var currentFile = currentBranchFiles.get(filename);
+//
+//        }
+
+        for (var filename : uniqueGivenSet) {
+            var givenFile = givenBranchFiles.get(filename);
+            if (givenFile == null) {
+                removal.add(filename);
+            } else {
+                // Any files that have been modified in the given branch since the split point,
+                // but not modified in the current branch since the split point
+                // should be changed to their versions in the given branch
+                // (checked out from the commit at the front of the given branch).
+
+                // Any files that were not present at the split point and
+                // are present only in the given branch should be checked out and staged.
+                var blob = Utils.readObject(Utils.join(GITLET_DIR, givenFile), Blob.class);
+                addition.put(filename, blob);
+                Utils.writeContents(Utils.join(CWD, blob.getFilename()), blob.getContent());
+            }
+        }
+
+        /*
+        for (var filename: currentBranchFiles.keySet()) {
+            var currentFile = currentBranchFiles.get(filename);
+            var givenFile = currentBranchFiles.get(filename);
+            var ancestorFile = commonAncestorFiles.get(filename);
+            if (givenBranchFiles.containsKey(filename)) {
+                // Any files that have been modified in both
+                if (currentFile != null
+                && currentFile.equals(givenFile)) {
+                    // both files now have the same content
+                } else if (currentFile == null
+                        && givenFile == null) {
+                    // were both removed
+                }
+
+                // conflict
+                // 1. both changed
+                // 2. current changed, given deleted
+                // 3. given changed, current deleted
+                if ((currentFile != null && givenFile != null && !currentFile.equals(givenFile))
+                || (currentFile != null && ancestorFile != null && givenFile == null)
+                || (currentFile == null && ancestorFile != null && givenFile != null)) {
+                    var sb = new StringBuilder();
+                    String currentContent = "";
+                    String givenContent = "";
+                    if (currentFile != null) {
+                        var currentBlob = Utils.readObject(Utils.join(GITLET_DIR, currentFile), Blob.class);
+                        currentContent = currentBlob.getContent();
+                    }
+                    if (givenFile != null) {
+                        var givenBlob = Utils.readObject(Utils.join(GITLET_DIR, givenFile), Blob.class);
+                        givenContent = givenBlob.getContent();
+                    }
+                    sb.append("<<<<<<< HEAD\n")
+                            .append(currentContent)
+                            .append("=======\n")
+                            .append(givenContent)
+                            .append(">>>>>>>");
+                    var content = sb.toString();
+                    Utils.writeContents(Utils.join(CWD, filename), content);
+
+                    var blob = new Blob(filename);
+                    addition.put(filename, blob);
+                    conflictFlag = true;
+                }
+
+
+            } else {
+                // Any files that have been modified in the current branch
+                // but not in the given branch since the split point should stay as they are.
+            }
+
+            if (!givenBranchFiles.containsKey(filename)
+                    && commonAncestorFiles.containsKey(filename)
+            && currentBranchFiles.get(filename) == null) {
+                // Any files present at the split point,
+                // unmodified in the given branch,
+                // and absent in the current branch should remain absent.
+            }
+        }
+
+        for (var filename : givenBranchFiles.keySet()) {
+            // Any files that have been modified in the given branch since the split point,
+            // but not modified in the current branch since the split point
+            // should be changed to their versions in the given branch
+            // (checked out from the commit at the front of the given branch).
+            if (!currentBranchFiles.containsKey(filename)) {
+                var blob = Utils.readObject(Utils.join(GITLET_DIR, givenBranchFiles.get(filename)), Blob.class);
+                addition.put(filename, blob);
+                Utils.writeContents(Utils.join(CWD, blob.getFilename()), blob.getContent());
+            }
+
+            if (!currentBranchFiles.containsKey(filename)
+                    && commonAncestorFiles.containsKey(filename)) {
+                // Any files present at the split point, unmodified in the current branch,
+                // and absent in the given branch should be removed (and untracked).
+                removal.add(filename);
+            }
+
+            if (!currentBranchFiles.containsKey(filename)
+            && commonAncestorFiles.containsKey(filename)
+            && givenBranchFiles.get(filename) == null) {
+                removal.add(filename);
+            }
+        }
+
+         */
+
+        var msg = "Merged " + givenBranchName + " into " + currentBranchName + ".";
+        var commit = new Commit(msg, head.getId(), givenBranchCommit.getId());
+        for (var entry : addition.entrySet()) {
+            var blob = entry.getValue();
+            commit.addFile(blob.getFilename(), blob.getId());
+        }
+        for (var removedFile : removal) {
+            commit.addFile(removedFile, null);
+            Utils.join(CWD, removedFile).delete();
+        }
+
+        head = commit;
+        currentBranch = commit;
+        Utils.writeContents(Utils.join(BRANCH, currentBranchName), currentBranch.getId());
+
+        FileUtils.copyAll(ADDITION, GITLET_DIR);
+        Utils.writeObject(Utils.join(COMMIT, commit.getId()), commit);
+
+        addition.clear();
+        removal.clear();
+
+        if (conflictFlag) {
+           Utils.message("Encountered a merge conflict.");
+        }
 
     }
+
+    private static Commit getCommonAncestor(String givenBranchName) {
+        var givenBranchCommits = branches.get(givenBranchName);
+        var currentBranchCommits = branches.get(currentBranchName);
+        for (var commit: currentBranchCommits) {
+            for (var givenCommit : givenBranchCommits) {
+                if (commit.getId().equals(givenCommit.getId())) {
+                    return commit;
+                }
+            }
+        }
+        return null;
+    }
+
+
 
     // print utils
     private static void printCommit(Commit commit) {
         Utils.message("===");
         Utils.message("commit %s", commit.getId());
-        Utils.message("Date: %s", commit.getTimestamp());
-        Utils.message(commit.getMessage());
-        if (!commit.getMergedParentId().isEmpty()) {
-            Utils.message("Merged %s into %s.",
-                    getBranchNameByCommitId(commit.getId()),
-                    getBranchNameByCommitId(commit.getMergedParentId()));
+        if (commit.getMergedParentId().isEmpty()) {
+            Utils.message("Date: %s", commit.getTimestamp());
+            Utils.message(commit.getMessage());
+        } else {
+            Utils.message("Merge: %s %s", commit.getParentId().substring(0,7),
+                    commit.getMergedParentId().substring(0,7));
+            Utils.message("Date: %s", commit.getTimestamp());
+            Utils.message(commit.getMessage());
         }
+
         Utils.message("");
     }
 
@@ -463,7 +693,7 @@ public class Repository {
         return Utils.readObject(Utils.join(COMMIT, id), Commit.class);
     }
 
-    public static Commit getLastCommit(String branchName) {
+    private static Commit getBranchCommit(String branchName) {
         if (branchName.isEmpty()) {
             return null;
         }
@@ -490,7 +720,7 @@ public class Repository {
     }
 
     // branch utils
-    public static String getBranchNameByCommitId(String commitId) {
+    private static String getBranchNameByCommitId(String commitId) {
         for (var entry : branches.entrySet()) {
             var branchName = entry.getKey();
             var branch = entry.getValue();
@@ -503,7 +733,7 @@ public class Repository {
         return null;
     }
 
-    public static ArrayList<Commit> getBranch(Commit commit) {
+    private static ArrayList<Commit> getBranch(Commit commit) {
         var currentId = commit.getId();
         var list = new ArrayList<Commit>();
         while (!currentId.isEmpty()) {
@@ -516,7 +746,7 @@ public class Repository {
         return list;
     }
 
-    public static void getAllBranches() {
+    private static void getAllBranches() {
         var files = Utils.plainFilenamesIn(BRANCH);
         if (files != null) {
             for (var file : files) {
@@ -532,7 +762,7 @@ public class Repository {
 
     // file utils
     // TreeMap file => filename, blobId
-    public static TreeMap<String, String> getFilesMap(Commit commit) {
+    private static TreeMap<String, String> getFilesMap(Commit commit) {
         var map = new TreeMap<String, String>();
         var current = commit;
         while (!current.getParentId().isEmpty()) {
@@ -546,8 +776,25 @@ public class Repository {
         return map;
     }
 
+    // file utils
     // TreeMap file => filename, blobId
-    public static TreeMap<String, String> getWorkspaceFiles() {
+    private static TreeMap<String, String> getFilesMap(Commit currentCommit, Commit endCommit) {
+        var map = new TreeMap<String, String>();
+        var current = currentCommit;
+        var endId = endCommit.getId();
+        while (!current.getId().equals(endId)) {
+            for (var entry : current.getFiles().entrySet()) {
+                if (!map.containsKey(entry.getKey()) /* && entry.getValue() != null */) {
+                    map.put(entry.getKey(), entry.getValue());
+                }
+            }
+            current = getCommit(current.getParentId());
+        }
+        return map;
+    }
+
+    // TreeMap file => filename, blobId
+    private static TreeMap<String, String> getWorkspaceFiles() {
         var workspaceFiles = new TreeMap<String, String>();
         var files = Utils.plainFilenamesIn(CWD);
         if (files != null) {
@@ -563,7 +810,8 @@ public class Repository {
     }
 
     // HashSet file => filename
-    public static HashSet<String> getUntrackedFiles(TreeMap<String, String> workspaceFiles, TreeMap<String, String> currentFilesMap) {
+    private static HashSet<String> getUntrackedFiles(TreeMap<String, String> workspaceFiles,
+                                                    TreeMap<String, String> currentFilesMap) {
         var untrackedFiles = new HashSet<String>();
         for (var filename : workspaceFiles.keySet()) {
             if (!currentFilesMap.containsKey(filename) && !addition.containsKey(filename)) {
@@ -573,7 +821,7 @@ public class Repository {
         return untrackedFiles;
     }
 
-    public static void checkUntrackedFile(TreeMap<String, String> workspaceFiles, TreeMap<String, String> filesMap) {
+    private static void checkUntrackedFile(TreeMap<String, String> workspaceFiles, TreeMap<String, String> filesMap) {
         for (var filename : workspaceFiles.keySet()) {
             if (!filesMap.containsKey(filename)) {
                 Utils.message("There is an untracked file in the way; delete it, or add and commit it first.");
@@ -582,13 +830,4 @@ public class Repository {
         }
     }
 
-    public static void readItemsFormREMOVAL(File file) {
-        if (file.exists()) {
-            var content = Utils.readContentsAsString(file);
-            var arr = content.split("<<<");
-            if (!arr[0].isEmpty()) {
-                removal = new HashSet<>(Arrays.asList(arr));
-            }
-        }
-    }
 }

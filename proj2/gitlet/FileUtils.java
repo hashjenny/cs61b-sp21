@@ -76,7 +76,11 @@ public class FileUtils {
     public static void writeAllContentFiles(File folder, TreeMap<String, String> filesMap) {
         for (var entry : filesMap.entrySet()) {
             var filename = entry.getKey();
-            var content = getBlob(entry.getValue()).getContent();
+            var blobId = entry.getValue();
+            if (blobId == null) {
+                continue;
+            }
+            var content = getBlob(blobId).getContent();
             var file = Utils.join(folder, filename);
             Utils.writeContents(file, content);
         }
