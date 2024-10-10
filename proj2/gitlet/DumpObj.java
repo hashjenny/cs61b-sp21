@@ -32,7 +32,7 @@ public class DumpObj {
     /** Deserialize and apply dump to the contents of each of the files
      *  in FILES. */
     public static void main(String... args) {
-        var path = "E:\\0.CSLectures\\cs61b\\cs61b-sp21\\proj2\\.gitlet\\_Commit";
+        var path = "E:\\0.CSLectures\\cs61b\\cs61b-sp21\\proj2\\testing\\test36-merge-err_0\\.gitlet\\_Commit";
         var files = new File(path).listFiles();
         for (var file : files) {
             Dumpable obj = Utils.readObject(file,

@@ -613,6 +613,147 @@ public class Repository {
 
     }
 
+    public static void merge2(String givenBranchName) {
+        if (!branches.containsKey(givenBranchName)) {
+            Utils.message("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        if (givenBranchName.equals(currentBranchName)) {
+            Utils.message("Cannot merge a branch with itself.");
+            System.exit(0);
+        }
+        if (!addition.isEmpty() || !removal.isEmpty()) {
+            Utils.message("You have uncommitted changes.");
+            System.exit(0);
+        }
+        var conflictFlag = false;
+        var givenBranchCommit = branches.get(givenBranchName).get(0);
+        var commonAncestor = getCommonAncestor(givenBranchCommit);
+
+        Utils.writeContents(Utils.join(GITLET_DIR, givenBranchName + "->" + currentBranchName),
+                commonAncestor.getMessage());
+
+        checkUntrackedFile();
+        if (commonAncestor == null) {
+            return;
+        } else if (commonAncestor.getId().equals(givenBranchCommit.getId())) {
+            // if the split point is the same commit as the given branch,
+            // then we do nothing; the merge is complete
+            Utils.message("Given branch is an ancestor of the current branch.");
+            System.exit(0);
+        } else if (commonAncestor.getId().equals(head.getId())) {
+            // If the split point is the current branch,
+            // then the effect is to check out the given branch
+            var givenBranchFiles = getFilesMap(givenBranchCommit);
+
+            FileUtils.deleteAll(CWD);
+            FileUtils.writeAllContentFiles(CWD, givenBranchFiles);
+            currentBranch = givenBranchCommit;
+            currentBranchName = givenBranchName;
+            head = givenBranchCommit;
+            Utils.message("Current branch fast-forwarded.");
+            System.exit(0);
+        }
+
+        var givenBranchFiles = getFilesMap(givenBranchCommit, commonAncestor);
+        var currentBranchFiles = getFilesMap(head, commonAncestor);
+        var workspaceFiles = getWorkspaceFiles();
+        var commonAncestorFiles = getFilesMap(commonAncestor);
+
+        var bothSet = new TreeSet<>(currentBranchFiles.keySet());
+        bothSet.retainAll(givenBranchFiles.keySet());
+        var uniqueCurrentSet = new TreeSet<String>(currentBranchFiles.keySet());
+        uniqueCurrentSet.removeAll(givenBranchFiles.keySet());
+        var uniqueGivenSet = new TreeSet<String>(givenBranchFiles.keySet());
+        uniqueGivenSet.removeAll(currentBranchFiles.keySet());
+
+        for (var filename : bothSet) {
+            var currentFile = currentBranchFiles.get(filename);
+            var givenFile = givenBranchFiles.get(filename);
+            if (currentFile == null && givenFile == null) {
+                // were both removed
+            } else if (currentFile != null && currentFile.equals(givenFile)) {
+                // both files now have the same content
+            } else {
+                // conflict
+                // 1. both changed
+                // 2. current changed, given deleted
+                // 3. given changed, current deleted
+                var sb = new StringBuilder();
+                String currentContent = "";
+                String givenContent = "";
+                if (currentFile != null) {
+                    var currentBlob = Utils.readObject(Utils.join(GITLET_DIR, currentFile), Blob.class);
+                    currentContent = currentBlob.getContent();
+                }
+                if (givenFile != null) {
+                    var givenBlob = Utils.readObject(Utils.join(GITLET_DIR, givenFile), Blob.class);
+                    givenContent = givenBlob.getContent();
+                }
+                sb.append("<<<<<<< HEAD\n")
+                        .append(currentContent)
+                        .append("=======\n")
+                        .append(givenContent)
+                        .append(">>>>>>>");
+                var content = sb.toString();
+                Utils.writeContents(Utils.join(CWD, filename), content);
+
+                var blob = new Blob(filename);
+                addition.put(filename, blob);
+                conflictFlag = true;
+            }
+        }
+
+//        for (var filename : uniqueCurrentSet) {
+//            var currentFile = currentBranchFiles.get(filename);
+//
+//        }
+
+        for (var filename : uniqueGivenSet) {
+            var givenFile = givenBranchFiles.get(filename);
+            if (givenFile == null) {
+                removal.add(filename);
+            } else {
+                // Any files that have been modified in the given branch since the split point,
+                // but not modified in the current branch since the split point
+                // should be changed to their versions in the given branch
+                // (checked out from the commit at the front of the given branch).
+
+                // Any files that were not present at the split point and
+                // are present only in the given branch should be checked out and staged.
+                var blob = Utils.readObject(Utils.join(GITLET_DIR, givenFile), Blob.class);
+                addition.put(filename, blob);
+                Utils.writeContents(Utils.join(CWD, blob.getFilename()), blob.getContent());
+            }
+        }
+
+        var msg = "Merged " + givenBranchName + " into " + currentBranchName + ".";
+        var commit = new Commit(msg, head.getId(), givenBranchCommit.getId());
+        for (var entry : addition.entrySet()) {
+            var blob = entry.getValue();
+            commit.addFile(blob.getFilename(), blob.getId());
+        }
+        for (var removedFile : removal) {
+            commit.addFile(removedFile, null);
+            Utils.join(CWD, removedFile).delete();
+        }
+
+        head = commit;
+        currentBranch = commit;
+        Utils.writeContents(Utils.join(BRANCH, currentBranchName), currentBranch.getId());
+
+        FileUtils.copyAll(ADDITION, GITLET_DIR);
+        Utils.writeObject(Utils.join(COMMIT, commit.getId()), commit);
+
+        addition.clear();
+        removal.clear();
+
+        if (conflictFlag) {
+            Utils.message("Encountered a merge conflict.");
+        }
+
+    }
+
     private static Commit getCommonAncestor(String givenBranchName) {
         var givenBranchCommits = branches.get(givenBranchName);
         var currentBranchCommits = branches.get(currentBranchName);
@@ -840,6 +981,51 @@ public class Repository {
                 System.exit(0);
             }
         }
+    }
+
+    private static TreeMap<String, Integer> travelTree(Commit commit, int depth, TreeMap<String, Integer> depthMap) {
+        if (depthMap == null) {
+            depthMap = new TreeMap<>();
+        }
+        if (commit != null) {
+            depthMap.put(commit.getId(), depth);
+            var parentId = commit.getParentId();
+            var mergedId = commit.getMergedParentId();
+            var set = new TreeSet<String>();
+            if (parentId != null) {
+                set.add(parentId);
+            }
+            if (mergedId != null) {
+                set.add(mergedId);
+            }
+            for (var id : set) {
+                travelTree(getCommit(id), depth + 1, depthMap);
+            }
+        }
+        return depthMap;
+    }
+
+    private static Commit getCommonAncestor(Commit givenCommit) {
+        var currentTree = travelTree(currentBranch, 0, null);
+        var givenTree = travelTree(givenCommit, 0, null);
+
+        var commonCommit = new TreeSet<>(currentTree.keySet());
+        commonCommit.retainAll(new TreeSet<>(givenTree.keySet()));
+
+        var min = Integer.MAX_VALUE;
+        String minId = null;
+
+        for (var id : commonCommit) {
+            var depth = Math.max(currentTree.get(id), givenTree.get(id));
+            if (depth < min) {
+                min = depth;
+                minId = id;
+            }
+        }
+        if (minId == null) {
+            return null;
+        }
+        return getCommit(minId);
     }
 
 //    private static void checkUncommitted() {

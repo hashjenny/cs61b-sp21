@@ -105,6 +105,20 @@ public class Commit implements Serializable, Dumpable {
         return mergedParentId;
     }
 
+    public ArrayList<String> getAllParents() {
+        var arr = new ArrayList<String>();
+        if (parentId != null) {
+            arr.add(parentId);
+        }
+        if (mergedParentId != null) {
+            arr.add(mergedParentId);
+        }
+        if (arr.isEmpty()) {
+            return null;
+        }
+        return arr;
+    }
+
     public HashMap<String, String> getFiles() {
         return files;
     }
