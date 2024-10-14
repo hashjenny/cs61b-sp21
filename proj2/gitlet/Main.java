@@ -104,7 +104,7 @@ public class Main {
                     Utils.message("Incorrect operands.");
                     System.exit(0);
                 }
-                Repository.merge2(args[1]);
+                Repository.merge(args[1]);
                 break;
             default:
                 Utils.message("No command with that name exists.");

@@ -170,11 +170,11 @@ public class TestGitlet {
         storeGitlet();
 
         loadGitlet();
-        merge2("C1");
+        merge("C1");
         storeGitlet();
 
         loadGitlet();
-        merge2("B2");
+        merge("B2");
         storeGitlet();
 
         loadGitlet();
