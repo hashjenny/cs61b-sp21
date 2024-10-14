@@ -4,6 +4,8 @@ import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 
 import static gitlet.Repository.*;
 import static gitlet.Utils.*;
@@ -22,6 +24,7 @@ public class TestGitlet {
         new File("g.txt").delete();
         new File("h.txt").delete();
         new File("k.txt").delete();
+        new File("m.txt").delete();
     }
 
 
@@ -41,81 +44,8 @@ public class TestGitlet {
         storeGitlet();
     }
 
-    @Test
-    public void test33() {
-        setupGitlet();
-        init();
-        Utils.writeContents(Utils.join(CWD, "f.txt"), "f");
-        Utils.writeContents(Utils.join(CWD, "g.txt"), "g");
+    public void commonAction1() {
 
-        loadGitlet();
-        add("f.txt");
-        storeGitlet();
-
-        loadGitlet();
-        add("g.txt");
-        storeGitlet();
-
-        loadGitlet();
-        commit("Two files");
-        storeGitlet();
-
-        loadGitlet();
-        branch("other");
-        storeGitlet();
-
-        Utils.writeContents(Utils.join(CWD, "h.txt"), "h");
-        loadGitlet();
-        add("h.txt");
-        storeGitlet();
-
-        loadGitlet();
-        rm("g.txt");
-        storeGitlet();
-
-        loadGitlet();
-        commit("Add h.txt and remove g.txt");
-        storeGitlet();
-
-        loadGitlet();
-        status();
-        storeGitlet();
-
-        loadGitlet();
-        checkout("other");
-        storeGitlet();
-
-        loadGitlet();
-        rm("f.txt");
-        storeGitlet();
-
-        Utils.writeContents(Utils.join(CWD, "k.txt"), "k");
-        loadGitlet();
-        add("k.txt");
-        storeGitlet();
-
-        loadGitlet();
-        commit("Add k.txt and remove f.txt");
-        storeGitlet();
-
-        loadGitlet();
-        checkout("master");
-        storeGitlet();
-
-        loadGitlet();
-        merge("other");
-        storeGitlet();
-
-        loadGitlet();
-        log();
-        storeGitlet();
-
-    }
-
-    @Test
-    public void test36() {
-        setupGitlet();
-        init();
         Utils.writeContents(Utils.join(CWD, "f.txt"), "wug");
         Utils.writeContents(Utils.join(CWD, "g.txt"), "nonwug");
 
@@ -130,7 +60,9 @@ public class TestGitlet {
         loadGitlet();
         commit("Two files");
         storeGitlet();
+    }
 
+    public void commonAction2() {
         loadGitlet();
         branch("other");
         storeGitlet();
@@ -164,6 +96,101 @@ public class TestGitlet {
         loadGitlet();
         commit("Add k.txt and remove f.txt");
         storeGitlet();
+    }
+
+    public String getDiffFile(File[] f1, File[] f2) {
+        var set1 = new HashSet<File>(Arrays.asList(f1));
+
+        var set2 = new HashSet<File>(Arrays.asList(f2));
+
+        set2.removeAll(set1);
+        var item  =  set2.iterator().next();
+        return item.getName();
+    }
+
+    @Test
+    public void test36a() {
+
+        setupGitlet();
+        init();
+
+        loadGitlet();
+        branch("B1");
+        storeGitlet();
+
+        loadGitlet();
+        branch("B2");
+        storeGitlet();
+
+        loadGitlet();
+        checkout("B1");
+        storeGitlet();
+
+        Utils.writeContents(Utils.join(CWD, "h.txt"), "h");
+        loadGitlet();
+        add("h.txt");
+        storeGitlet();
+
+        loadGitlet();
+        commit("Add h.txt");
+        storeGitlet();
+
+        loadGitlet();
+        checkout("B2");
+        storeGitlet();
+
+        Utils.writeContents(Utils.join(CWD, "f.txt"), "f");
+        loadGitlet();
+        add("f.txt");
+        storeGitlet();
+
+        loadGitlet();
+        commit("Add f.txt");
+        storeGitlet();
+
+        loadGitlet();
+        branch("C1");
+        storeGitlet();
+
+        Utils.writeContents(Utils.join(CWD, "g.txt"), "g");
+        loadGitlet();
+        add("g.txt");
+        storeGitlet();
+
+        loadGitlet();
+        rm("f.txt");
+        storeGitlet();
+
+        loadGitlet();
+        commit("g.txt added, f.txt removed");
+        storeGitlet();
+
+        loadGitlet();
+        checkout("B1");
+        storeGitlet();
+
+        loadGitlet();
+        merge2("C1");
+        storeGitlet();
+
+        loadGitlet();
+        merge2("B2");
+        storeGitlet();
+
+        loadGitlet();
+        log();
+        storeGitlet();
+
+    }
+
+    @Test
+    public void test33() {
+        setupGitlet();
+        init();
+
+        commonAction1();
+
+        commonAction2();
 
         loadGitlet();
         checkout("master");
@@ -179,5 +206,48 @@ public class TestGitlet {
         log();
         storeGitlet();
 
+    }
+
+    // reset
+    @Test
+    public void test37() {
+        setupGitlet();
+        init();
+
+        var commitFolder = new File("E:\\0.CSLectures\\cs61b\\cs61b-sp21\\proj2\\.gitlet\\_Commit");
+        var initFiles = commitFolder.listFiles();
+
+        commonAction1();
+
+        var commonAction1Files = commitFolder.listFiles();
+        var filename = getDiffFile(initFiles, commonAction1Files);
+//        System.out.println(filename);
+
+        commonAction2();
+
+//        loadGitlet();
+//        log();
+//        storeGitlet();
+
+        loadGitlet();
+        checkout("master");
+        storeGitlet();
+
+//        loadGitlet();
+//        log();
+//        storeGitlet();
+
+        Utils.writeContents(Utils.join(CWD, "m.txt"), "wug");
+        loadGitlet();
+        add("m.txt");
+        storeGitlet();
+
+        loadGitlet();
+        reset(filename);
+        storeGitlet();
+
+        loadGitlet();
+        checkout("other");
+        storeGitlet();
     }
 }

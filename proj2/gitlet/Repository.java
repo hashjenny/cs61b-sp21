@@ -29,14 +29,14 @@ public class Repository {
 
     // dir
     public static final File COMMIT = join(GITLET_DIR, "_Commit");
-    // file
+    // file - text
     public static final File HEAD = join(GITLET_DIR, "_Head");
     public static final File CURRENT = join(GITLET_DIR, "_Current");
-    // dir
+    // dir - text
     public static final File BRANCH = join(GITLET_DIR, "_Branch");
-    // dir
+    // dir - Blob
     public static final File ADDITION = join(GITLET_DIR, "_Addition");
-    // file
+    // file - text
     public static final File REMOVAL = join(GITLET_DIR, "_Removal");
 
     private static Commit head;
@@ -79,6 +79,9 @@ public class Repository {
         FileUtils.deleteAll(ADDITION);
         FileUtils.writeAllObjects(ADDITION, addition);
         FileUtils.writeItemsToFile(REMOVAL, removal);
+
+        var currentBranchFile = Utils.join(BRANCH, currentBranchName);
+        Utils.writeContents(currentBranchFile, currentBranch.getId());
     }
 
     public static void init() {
@@ -362,6 +365,14 @@ public class Repository {
     public static void reset(String commitId) {
         var commit = getCommitFromShortenName(commitId);
         var currentBranchFiles = getFilesMap(head);
+        // Removes tracked files that are not present in that commit.
+        for (var filename : addition.keySet()) {
+            if (!currentBranchFiles.containsKey(filename)) {
+                addition.remove(filename);
+                Utils.join(CWD, filename).delete();
+            }
+        }
+
         checkUntrackedFile(getWorkspaceFiles(), currentBranchFiles);
 
         var commitFilesMap = getFilesMap(commit);
@@ -608,7 +619,7 @@ public class Repository {
         removal.clear();
 
         if (conflictFlag) {
-           Utils.message("Encountered a merge conflict.");
+            Utils.message("Encountered a merge conflict.");
         }
 
     }
@@ -629,9 +640,6 @@ public class Repository {
         var conflictFlag = false;
         var givenBranchCommit = branches.get(givenBranchName).get(0);
         var commonAncestor = getCommonAncestor(givenBranchCommit);
-
-        Utils.writeContents(Utils.join(GITLET_DIR, givenBranchName + "->" + currentBranchName),
-                commonAncestor.getMessage());
 
         checkUntrackedFile();
         if (commonAncestor == null) {
@@ -655,10 +663,28 @@ public class Repository {
             System.exit(0);
         }
 
-        var givenBranchFiles = getFilesMap(givenBranchCommit, commonAncestor);
-        var currentBranchFiles = getFilesMap(head, commonAncestor);
-        var workspaceFiles = getWorkspaceFiles();
-        var commonAncestorFiles = getFilesMap(commonAncestor);
+        var givenBranchFiles = getMergedFilesMap(givenBranchCommit, commonAncestor);
+        var currentBranchFiles = getMergedFilesMap(head, commonAncestor);
+        var ancestorFiles = getFilesMap(commonAncestor);
+
+        for (var entry : ancestorFiles.entrySet()) {
+            var filename = entry.getKey();
+            var fileId = entry.getValue();
+            // Any files present at the split point, unmodified in the current branch,
+            // and absent in the given branch should be removed (and untracked).
+            if (currentBranchFiles.containsKey(filename)
+                    && fileId.equals(currentBranchFiles.get(filename))
+                    && givenBranchFiles.get(filename) == null) {
+                currentBranchFiles.remove(filename);
+            }
+            // Any files present at the split point, unmodified in the given branch,
+            // and absent in the current branch should remain absent.
+            if (givenBranchFiles.containsKey(filename)
+                    && fileId.equals(givenBranchFiles.get(filename))
+                    && currentBranchFiles.get(filename) == null) {
+                givenBranchFiles.remove(filename);
+            }
+        }
 
         var bothSet = new TreeSet<>(currentBranchFiles.keySet());
         bothSet.retainAll(givenBranchFiles.keySet());
@@ -727,6 +753,8 @@ public class Repository {
             }
         }
 
+
+
         var msg = "Merged " + givenBranchName + " into " + currentBranchName + ".";
         var commit = new Commit(msg, head.getId(), givenBranchCommit.getId());
         for (var entry : addition.entrySet()) {
@@ -757,7 +785,7 @@ public class Repository {
     private static Commit getCommonAncestor(String givenBranchName) {
         var givenBranchCommits = branches.get(givenBranchName);
         var currentBranchCommits = branches.get(currentBranchName);
-        for (var commit: currentBranchCommits) {
+        for (var commit : currentBranchCommits) {
             for (var givenCommit : givenBranchCommits) {
                 if (commit.getId().equals(givenCommit.getId())) {
                     return commit;
@@ -768,7 +796,6 @@ public class Repository {
     }
 
 
-
     // print utils
     private static void printCommit(Commit commit) {
         Utils.message("===");
@@ -777,8 +804,8 @@ public class Repository {
             Utils.message("Date: %s", commit.getTimestamp());
             Utils.message(commit.getMessage());
         } else {
-            Utils.message("Merge: %s %s", commit.getParentId().substring(0,7),
-                    commit.getMergedParentId().substring(0,7));
+            Utils.message("Merge: %s %s", commit.getParentId().substring(0, 7),
+                    commit.getMergedParentId().substring(0, 7));
             Utils.message("Date: %s", commit.getTimestamp());
             Utils.message(commit.getMessage());
         }
@@ -933,6 +960,23 @@ public class Repository {
         return map;
     }
 
+    private static TreeMap<String, String> getMergedFilesMap(Commit currentCommit, Commit endCommit) {
+        var map = new TreeMap<String, String>();
+        var path = findPath(currentCommit, endCommit.getId());
+        if (path != null) {
+            path.remove(path.size() - 1);
+            for (var commit : path) {
+                for (var entry : commit.getFiles().entrySet()) {
+                    if (!map.containsKey(commit.getId())) {
+                        map.put(entry.getKey(), entry.getValue());
+                    }
+                }
+            }
+        }
+
+        return map;
+    }
+
     // TreeMap file => filename, blobId
     private static TreeMap<String, String> getWorkspaceFiles() {
         var workspaceFiles = new TreeMap<String, String>();
@@ -951,7 +995,7 @@ public class Repository {
 
     // HashSet file => filename
     private static HashSet<String> getUntrackedFiles(TreeMap<String, String> workspaceFiles,
-                                                    TreeMap<String, String> currentFilesMap) {
+                                                     TreeMap<String, String> currentFilesMap) {
         var untrackedFiles = new HashSet<String>();
         for (var filename : workspaceFiles.keySet()) {
             if (!currentFilesMap.containsKey(filename) && !addition.containsKey(filename)) {
@@ -1026,6 +1070,39 @@ public class Repository {
             return null;
         }
         return getCommit(minId);
+    }
+
+    public static ArrayList<Commit> findPath(Commit commit, String targetId) {
+        if (commit == null) {
+            return null;
+        }
+
+        var stack = new Stack<Commit>();
+        var path = new Stack<ArrayList<Commit>>();
+
+        stack.push(commit);
+        path.push(new ArrayList<>(List.of(commit)));
+
+        while (!stack.isEmpty()) {
+            var current = stack.pop();
+            var currentPath = path.pop();
+            if (current.getId().equals(targetId)) {
+                return currentPath;
+            }
+            if (!current.getParentId().isEmpty()) {
+                stack.push(getCommit(current.getParentId()));
+                var parentPath = new ArrayList<>(currentPath);
+                parentPath.add(getCommit(current.getParentId()));
+                path.push(parentPath);
+            }
+            if (!current.getMergedParentId().isEmpty()) {
+                stack.push(getCommit(current.getMergedParentId()));
+                var mergedPath = new ArrayList<>(currentPath);
+                mergedPath.add(getCommit(current.getMergedParentId()));
+                path.push(mergedPath);
+            }
+        }
+        return null;
     }
 
 //    private static void checkUncommitted() {
