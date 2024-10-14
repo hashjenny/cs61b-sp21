@@ -42,7 +42,7 @@ public class Repository {
     private static Commit head;
     private static String currentBranchName;
     private static Commit currentBranch;
-    private static final TreeMap<String, ArrayList<Commit>> branches = new TreeMap<>();
+    private static final TreeMap<String, ArrayList<Commit>> BRANCHES = new TreeMap<>();
     // filename -> blob
     private static TreeMap<String, Blob> addition = new TreeMap<>();
     private static HashSet<String> removal = new HashSet<>();
@@ -202,7 +202,7 @@ public class Repository {
 
     public static void status() {
         Utils.message("=== Branches ===");
-        for (var branchName : branches.keySet()) {
+        for (var branchName : BRANCHES.keySet()) {
             if (branchName.equals(currentBranchName)) {
                 Utils.message("*%s", branchName);
             } else {
@@ -386,7 +386,7 @@ public class Repository {
     }
 
     public static void merge(String givenBranchName) {
-        if (!branches.containsKey(givenBranchName)) {
+        if (!BRANCHES.containsKey(givenBranchName)) {
             Utils.message("A branch with that name does not exist.");
             System.exit(0);
         }
@@ -399,7 +399,7 @@ public class Repository {
             System.exit(0);
         }
         var conflictFlag = false;
-        var givenBranchCommit = branches.get(givenBranchName).get(0);
+        var givenBranchCommit = BRANCHES.get(givenBranchName).get(0);
         var commonAncestor = getCommonAncestor(givenBranchCommit);
 
         checkUntrackedFile();
@@ -539,8 +539,8 @@ public class Repository {
     }
 
     private static Commit getCommonAncestor(String givenBranchName) {
-        var givenBranchCommits = branches.get(givenBranchName);
-        var currentBranchCommits = branches.get(currentBranchName);
+        var givenBranchCommits = BRANCHES.get(givenBranchName);
+        var currentBranchCommits = BRANCHES.get(currentBranchName);
         for (var commit : currentBranchCommits) {
             for (var givenCommit : givenBranchCommits) {
                 if (commit.getId().equals(givenCommit.getId())) {
@@ -644,7 +644,7 @@ public class Repository {
 
     // branch utils
     private static String getBranchNameByCommitId(String commitId) {
-        for (var entry : branches.entrySet()) {
+        for (var entry : BRANCHES.entrySet()) {
             var branchName = entry.getKey();
             var branch = entry.getValue();
             for (var commit : branch) {
@@ -677,7 +677,7 @@ public class Repository {
                 var commit = getCommit(id);
                 if (commit != null) {
                     var branch = getBranch(commit);
-                    branches.put(file, branch);
+                    BRANCHES.put(file, branch);
                 }
             }
         }

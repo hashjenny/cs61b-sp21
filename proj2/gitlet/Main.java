@@ -16,7 +16,7 @@ public class Main {
             System.exit(0);
         }
         String firstArg = args[0];
-        switch(firstArg) {
+        switch (firstArg) {
             case "init":
                 Repository.setupGitlet();
                 Repository.init();

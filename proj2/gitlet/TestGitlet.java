@@ -15,9 +15,9 @@ public class TestGitlet {
     @Before
     public void setup() throws IOException, InterruptedException {
         Process process = Runtime.getRuntime().exec(new String[]{
-                "powershell.exe",
-                "-Command",
-                "Remove-Item -Path .gitlet -Recurse -Force"});
+            "powershell.exe",
+            "-Command",
+            "Remove-Item -Path .gitlet -Recurse -Force"});
         process.waitFor();
 
         new File("f.txt").delete();
@@ -221,21 +221,12 @@ public class TestGitlet {
 
         var commonAction1Files = commitFolder.listFiles();
         var filename = getDiffFile(initFiles, commonAction1Files);
-//        System.out.println(filename);
 
         commonAction2();
-
-//        loadGitlet();
-//        log();
-//        storeGitlet();
 
         loadGitlet();
         checkout("master");
         storeGitlet();
-
-//        loadGitlet();
-//        log();
-//        storeGitlet();
 
         Utils.writeContents(Utils.join(CWD, "m.txt"), "wug");
         loadGitlet();
