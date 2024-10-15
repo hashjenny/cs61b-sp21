@@ -75,12 +75,14 @@ public class FileUtils {
         }
     }
 
+    /*
     public static void writeAllRemotes(File folder, TreeMap<String, Remote> map) {
         for (var entry: map.entrySet()) {
             var remote = entry.getValue();
             Utils.writeObject(Utils.join(folder, remote.getName()), remote);
         }
     }
+     */
 
     public static void writeAllContentFiles(File folder, TreeMap<String, String> filesMap) {
         for (var entry : filesMap.entrySet()) {

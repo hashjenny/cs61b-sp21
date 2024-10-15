@@ -78,6 +78,7 @@ public class Main {
                 Repository.loadGitlet();
                 Repository.merge(args[1]);
                 break;
+            /*
             case "add-remote":
                 checkArgsLength(args, 3);
                 Repository.loadGitlet();
@@ -92,6 +93,8 @@ public class Main {
                 Repository.loadGitlet();
                 Repository.push(Arrays.copyOfRange(args, 1, args.length));
                 break;
+
+             */
             default:
                 Utils.message("No command with that name exists.");
                 System.exit(0);

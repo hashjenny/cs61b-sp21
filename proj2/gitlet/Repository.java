@@ -38,7 +38,7 @@ public class Repository {
     // file - text
     public static final File REMOVAL = join(GITLET_DIR, "_Removal");
     // dir - remote
-    public static final File REMOTE = join(GITLET_DIR, "_Remote");
+    // public static final File REMOTE = join(GITLET_DIR, "_Remote");
 
     private static Commit head;
     private static String currentBranchName;
@@ -48,7 +48,7 @@ public class Repository {
     private static TreeMap<String, Blob> addition = new TreeMap<>();
     private static HashSet<String> removal = new HashSet<>();
     // remoteName -> remotePath
-    private static TreeMap<String, Remote> remotes = new TreeMap<>();
+    // private static TreeMap<String, Remote> remotes = new TreeMap<>();
 
     public static void setupGitlet() {
         if (GITLET_DIR.exists()) {
@@ -59,7 +59,7 @@ public class Repository {
         COMMIT.mkdir();
         BRANCH.mkdir();
         ADDITION.mkdir();
-        REMOTE.mkdir();
+        // REMOTE.mkdir();
     }
 
     public static void loadGitlet() {
@@ -72,7 +72,7 @@ public class Repository {
         currentBranch = getBranchCommit(currentBranchName);
         addition = putAllBlobs(ADDITION);
         removal = FileUtils.readItemsFormFile(REMOVAL);
-        remotes = putAllRemotes(REMOTE);
+        // remotes = putAllRemotes(REMOTE);
         // load all branches as TreeMap (branchName -> branch(commit list))
         getAllBranches();
     }
@@ -83,8 +83,8 @@ public class Repository {
         FileUtils.deleteAll(ADDITION);
         FileUtils.writeAllBlobs(ADDITION, addition);
         FileUtils.writeItemsToFile(REMOVAL, removal);
-        FileUtils.deleteAll(REMOTE);
-        FileUtils.writeAllRemotes(REMOTE, remotes);
+        // FileUtils.deleteAll(REMOTE);
+        // FileUtils.writeAllRemotes(REMOTE, remotes);
         var currentBranchFile = Utils.join(BRANCH, currentBranchName);
         Utils.writeContents(currentBranchFile, currentBranch.getId());
     }
@@ -535,6 +535,7 @@ public class Repository {
 
     }
 
+    /*
     public static void addRemote(String... args) {
         // java gitlet.Main add-remote [remote name] [name of remote directory]/.gitlet
         var remoteName = args[0];
@@ -616,8 +617,9 @@ public class Repository {
             Utils.message("That remote does not have that branch.");
             System.exit(0);
         }
-
+        // something to do
     }
+     */
 
     private static Commit getCommonAncestor(String givenBranchName) {
         var givenBranchCommits = BRANCHES.get(givenBranchName);
@@ -688,6 +690,7 @@ public class Repository {
         return target;
     }
 
+    /*
     public static TreeMap<String, Remote> putAllRemotes(File folder) {
         var target = new TreeMap<String, Remote>();
         var files = Utils.plainFilenamesIn(folder);
@@ -699,6 +702,7 @@ public class Repository {
         }
         return target;
     }
+     */
 
     // commit utils
     public static Commit getCommit(String id) {
