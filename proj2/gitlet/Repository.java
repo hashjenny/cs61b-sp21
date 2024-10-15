@@ -471,7 +471,6 @@ public class Repository {
                 // 1. both changed
                 // 2. current changed, given deleted
                 // 3. given changed, current deleted
-                var sb = new StringBuilder();
                 String currentContent = "";
                 String givenContent = "";
                 if (currentFile != null) {
@@ -482,12 +481,7 @@ public class Repository {
                     var givenBlob = Utils.readObject(Utils.join(GITLET_DIR, givenFile), Blob.class);
                     givenContent = givenBlob.getContent();
                 }
-                sb.append("<<<<<<< HEAD\n")
-                        .append(currentContent)
-                        .append("=======\n")
-                        .append(givenContent)
-                        .append(">>>>>>>\n");
-                var content = sb.toString();
+                var content = "<<<<<<< HEAD\n" + currentContent + "=======\n" + givenContent + ">>>>>>>\n";
                 Utils.writeContents(Utils.join(CWD, filename), content);
 
                 var blob = new Blob(filename);
