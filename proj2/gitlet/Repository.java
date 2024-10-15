@@ -824,8 +824,8 @@ public class Repository {
         for (var filename : workspaceFiles.keySet()) {
             if (!filesMap.containsKey(filename)
                     || !workspaceFiles.get(filename).equals(filesMap.get(filename))) {
-                message("There is an untracked file in the way; " +
-                        "delete it, or add and commit it first.");
+                message("There is an untracked file in the way; "
+                        + "delete it, or add and commit it first.");
                 System.exit(0);
             }
         }
@@ -837,8 +837,8 @@ public class Repository {
         for (var filename : workspaceFiles.keySet()) {
             if (!currentFiles.containsKey(filename)
                     || !workspaceFiles.get(filename).equals(currentFiles.get(filename))) {
-                message("There is an untracked file in the way; " +
-                        "delete it, or add and commit it first.");
+                message("There is an untracked file in the way; "
+                        + "delete it, or add and commit it first.");
                 System.exit(0);
             }
         }
