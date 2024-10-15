@@ -110,4 +110,6 @@ public class TestGitlet2 {
         find("rm test1");
         find("rm test11"); // error
     }
+
+
 }

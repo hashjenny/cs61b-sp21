@@ -241,4 +241,22 @@ public class TestGitlet {
         checkout("other");
         storeGitlet();
     }
+
+    @Test
+    public void remoteTest() {
+        setupGitlet();
+        init();
+
+        loadGitlet();
+        addRemote("test", ".remote/test/.gitlet");
+        storeGitlet();
+
+        loadGitlet();
+        addRemote("test2", ".remote/test/.gitlet");
+        storeGitlet();
+
+        loadGitlet();
+        rmRemote("test");
+        storeGitlet();
+    }
 }

@@ -26,7 +26,6 @@ public class Repository {
      * The .gitlet directory.
      */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
-
     // dir
     public static final File COMMIT = join(GITLET_DIR, "_Commit");
     // file - text
@@ -38,6 +37,8 @@ public class Repository {
     public static final File ADDITION = join(GITLET_DIR, "_Addition");
     // file - text
     public static final File REMOVAL = join(GITLET_DIR, "_Removal");
+    // dir - remote
+    public static final File REMOTE = join(GITLET_DIR, "_Remote");
 
     private static Commit head;
     private static String currentBranchName;
@@ -46,6 +47,8 @@ public class Repository {
     // filename -> blob
     private static TreeMap<String, Blob> addition = new TreeMap<>();
     private static HashSet<String> removal = new HashSet<>();
+    // remoteName -> remotePath
+    private static TreeMap<String, Remote> remotes = new TreeMap<>();
 
     public static void setupGitlet() {
         if (GITLET_DIR.exists()) {
@@ -56,6 +59,7 @@ public class Repository {
         COMMIT.mkdir();
         BRANCH.mkdir();
         ADDITION.mkdir();
+        REMOTE.mkdir();
     }
 
     public static void loadGitlet() {
@@ -68,7 +72,7 @@ public class Repository {
         currentBranch = getBranchCommit(currentBranchName);
         addition = putAllBlobs(ADDITION);
         removal = FileUtils.readItemsFormFile(REMOVAL);
-
+        remotes = putAllRemotes(REMOTE);
         // load all branches as TreeMap (branchName -> branch(commit list))
         getAllBranches();
     }
@@ -77,9 +81,10 @@ public class Repository {
         Utils.writeContents(HEAD, head.getId());
         Utils.writeContents(CURRENT, currentBranchName);
         FileUtils.deleteAll(ADDITION);
-        FileUtils.writeAllObjects(ADDITION, addition);
+        FileUtils.writeAllBlobs(ADDITION, addition);
         FileUtils.writeItemsToFile(REMOVAL, removal);
-
+        FileUtils.deleteAll(REMOTE);
+        FileUtils.writeAllRemotes(REMOTE, remotes);
         var currentBranchFile = Utils.join(BRANCH, currentBranchName);
         Utils.writeContents(currentBranchFile, currentBranch.getId());
     }
@@ -509,8 +514,6 @@ public class Repository {
             }
         }
 
-
-
         var msg = "Merged " + givenBranchName + " into " + currentBranchName + ".";
         var commit = new Commit(msg, head.getId(), givenBranchCommit.getId());
         for (var entry : addition.entrySet()) {
@@ -534,6 +537,90 @@ public class Repository {
 
         if (conflictFlag) {
             Utils.message("Encountered a merge conflict.");
+        }
+
+    }
+
+    public static void addRemote(String... args) {
+        // java gitlet.Main add-remote [remote name] [name of remote directory]/.gitlet
+        var remoteName = args[0];
+        if (remotes.containsKey(remoteName)) {
+            Utils.message("A remote with that name already exists.");
+            System.exit(0);
+        }
+        var remoteUrl = args[1];
+        var url = remoteUrl.replace('/', File.separatorChar);
+        var remote = new Remote(remoteName, url);
+        remotes.put(remoteName, remote);
+    }
+
+    public static void rmRemote(String remoteName) {
+        if (!remotes.containsKey(remoteName)) {
+            Utils.message("A remote with that name does not exist.");
+            System.exit(0);
+        }
+        remotes.remove(remoteName);
+    }
+
+    public static void push(String... args) {
+        var remoteName = args[0];
+        var remoteBranchName = args[1];
+        var remote = remotes.get(remoteName);
+        if (!new File(remote.getUrl()).exists()) {
+            Utils.message("Remote directory not found.");
+            System.exit(0);
+        }
+        var currentBranchCommits = BRANCHES.get(currentBranch.getId());
+        var commitIds = new ArrayList<String>();
+        var blobIds = new ArrayList<String>();
+        if (remote.branchExists(remoteBranchName)) {
+            var remoteCommit = remote.getRemoteCommit(remoteBranchName);
+            var remoteCommitId = remoteCommit.getId();
+            for (var currentCommit : currentBranchCommits) {
+                var id = currentCommit.getId();
+                commitIds.add(id);
+                if (id.equals(remoteCommitId)) {
+                    break;
+                }
+            }
+            // If the remote branch’s head is not
+            // in the history of the current local head,
+            if (commitIds.size() == currentBranchCommits.size()) {
+                Utils.message("Please pull down remote changes before pushing.");
+                System.exit(0);
+            } else {
+                var files = getFilesMap(currentBranch, remoteCommit);
+                blobIds = new ArrayList<>(files.values());
+                commitIds.remove(commitIds.size() - 1);
+            }
+        } else {
+            // If the Gitlet system on the remote machine exists
+            // but does not have the input branch,
+            // then simply add the branch to the remote Gitlet.
+            blobIds = new ArrayList<>(getFilesMap(currentBranch).values());
+            for (var currentCommit : currentBranchCommits) {
+                var id = currentCommit.getId();
+                commitIds.add(id);
+            }
+            commitIds.remove(commitIds.size() - 1);
+
+        }
+        FileUtils.copyAll(GITLET_DIR, remote.getGitletDir(), blobIds);
+        FileUtils.copyAll(COMMIT, remote.getCommitDir(), commitIds);
+        remote.writeBranchHead(remoteBranchName, currentBranch.getId());
+    }
+
+    public static void fetch(String... args) {
+        var remoteName = args[0];
+        var remoteBranchName = args[1];
+        var remote = remotes.get(remoteName);
+        if (!new File(remote.getUrl()).exists()) {
+            Utils.message("Remote directory not found.");
+            System.exit(0);
+        }
+        if (remote.branchExists(remoteBranchName)) {
+            Utils.message("That remote does not have that branch.");
+            System.exit(0);
         }
 
     }
@@ -565,7 +652,6 @@ public class Repository {
             Utils.message("Date: %s", commit.getTimestamp());
             Utils.message(commit.getMessage());
         }
-
         Utils.message("");
     }
 
@@ -603,6 +689,18 @@ public class Repository {
             for (var f : files) {
                 var blob = Utils.readObject(Utils.join(folder, f), Blob.class);
                 target.put(blob.getFilename(), blob);
+            }
+        }
+        return target;
+    }
+
+    public static TreeMap<String, Remote> putAllRemotes(File folder) {
+        var target = new TreeMap<String, Remote>();
+        var files = Utils.plainFilenamesIn(folder);
+        if (files != null) {
+            for (var f : files) {
+                var remote = Utils.readObject(Utils.join(folder, f), Remote.class);
+                target.put(remote.getName(), remote);
             }
         }
         return target;

@@ -17,7 +17,6 @@ public class TestCommon {
             var path = Utils.join(ADDITION, file);
             blob = Utils.readObject(path, Blob.class);
         }
-
     }
 
 

@@ -8,7 +8,7 @@
         <groupId>CS61B</groupId>
         <artifactId>61BMasterPom</artifactId>
         <version>1.0-SNAPSHOT</version>
-        <relativePath>../library-sp21/javalib/masterpom.xml</relativePath>
+        <relativePath>../../library-sp21/javalib/masterpom.xml</relativePath>
     </parent>
 
     <groupId>CS61B</groupId>
@@ -16,8 +16,8 @@
     <version>1.0-SNAPSHOT</version>
 
     <build>
-        <sourceDirectory>${project.basedir}</sourceDirectory>
-        <testSourceDirectory>${project.basedir}</testSourceDirectory>
+        <sourceDirectory>..</sourceDirectory>
+        <testSourceDirectory>..</testSourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

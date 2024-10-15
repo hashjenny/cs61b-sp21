@@ -4,9 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.TreeMap;
-import java.util.HashSet;
+import java.util.*;
 
 import static gitlet.Repository.*;
 import static gitlet.Utils.join;
@@ -38,6 +36,14 @@ public class FileUtils {
         }
     }
 
+    public static void copyAll(File source, File target, Collection<String> files) {
+        for (var file : files) {
+            if (file != null) {
+                FileUtils.copy(source, target, file);
+            }
+        }
+    }
+
     public static void copyAll(File sourceFolder, File targetFolder) {
         var files = Utils.plainFilenamesIn(sourceFolder);
         if (files != null) {
@@ -66,10 +72,17 @@ public class FileUtils {
         Utils.writeContents(file, content);
     }
 
-    public static void writeAllObjects(File folder, TreeMap<String, Blob> map) {
+    public static void writeAllBlobs(File folder, TreeMap<String, Blob> map) {
         for (var entry: map.entrySet()) {
             var blob = entry.getValue();
             Utils.writeObject(Utils.join(folder, blob.getId()), blob);
+        }
+    }
+
+    public static void writeAllRemotes(File folder, TreeMap<String, Remote> map) {
+        for (var entry: map.entrySet()) {
+            var remote = entry.getValue();
+            Utils.writeObject(Utils.join(folder, remote.getName()), remote);
         }
     }
 

@@ -395,5 +395,6 @@ tramp
 .vscode/
 note.md
 .gitlet/
+.remote/
 TestGitlet.java
 TestGitlet2.java

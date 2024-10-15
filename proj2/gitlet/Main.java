@@ -15,34 +15,25 @@ public class Main {
             Utils.message("Please enter a command.");
             System.exit(0);
         }
-        String firstArg = args[0];
-        switch (firstArg) {
+        switch (args[0]) {
             case "init":
                 Repository.setupGitlet();
                 Repository.init();
                 break;
             case "add":
+                checkArgsLength(args, 2);
                 Repository.loadGitlet();
-                if (args.length < 2) {
-                    Utils.message("Incorrect operands.");
-                    System.exit(0);
-                }
                 var filename = args[1];
                 Repository.add(filename);
                 break;
             case "commit":
+                checkArgsLength(args, 2);
                 Repository.loadGitlet();
-                if (args.length < 2) {
-                    throw Utils.error("Please enter a commit message.");
-                }
                 Repository.commit(args[1]);
                 break;
             case "rm":
+                checkArgsLength(args, 2);
                 Repository.loadGitlet();
-                if (args.length < 2) {
-                    Utils.message("Incorrect operands.");
-                    System.exit(0);
-                }
                 Repository.rm(args[1]);
                 break;
             case "log":
@@ -54,11 +45,8 @@ public class Main {
                 Repository.globalLog();
                 break;
             case "find":
+                checkArgsLength(args, 2);
                 Repository.loadGitlet();
-                if (args.length < 2) {
-                    Utils.message("Incorrect operands.");
-                    System.exit(0);
-                }
                 Repository.find(args[1]);
                 break;
             case "status":
@@ -66,45 +54,43 @@ public class Main {
                 Repository.status();
                 break;
             case "checkout":
+                checkArgsLength(args, 2);
                 Repository.loadGitlet();
-                if (args.length < 2) {
-                    Utils.message("Incorrect operands.");
-                    System.exit(0);
-                }
-
                 Repository.checkout(Arrays.copyOfRange(args, 1, args.length));
                 break;
             case "branch":
+                checkArgsLength(args, 2);
                 Repository.loadGitlet();
-                if (args.length < 2) {
-                    Utils.message("Incorrect operands.");
-                    System.exit(0);
-                }
                 Repository.branch(args[1]);
                 break;
             case "rm-branch":
+                checkArgsLength(args, 2);
                 Repository.loadGitlet();
-                if (args.length < 2) {
-                    Utils.message("Incorrect operands.");
-                    System.exit(0);
-                }
                 Repository.rmBranch(args[1]);
                 break;
             case "reset":
+                checkArgsLength(args, 2);
                 Repository.loadGitlet();
-                if (args.length < 2) {
-                    Utils.message("Incorrect operands.");
-                    System.exit(0);
-                }
                 Repository.reset(args[1]);
                 break;
             case "merge":
+                checkArgsLength(args, 2);
                 Repository.loadGitlet();
-                if (args.length < 2) {
-                    Utils.message("Incorrect operands.");
-                    System.exit(0);
-                }
                 Repository.merge(args[1]);
+                break;
+            case "add-remote":
+                checkArgsLength(args, 3);
+                Repository.loadGitlet();
+                Repository.addRemote(Arrays.copyOfRange(args, 1, args.length));
+                break;
+            case "rm-remote":
+                checkArgsLength(args, 2);
+                Repository.loadGitlet();
+                Repository.rmRemote(args[1]);
+            case "push":
+                checkArgsLength(args, 3);
+                Repository.loadGitlet();
+                Repository.push(Arrays.copyOfRange(args, 1, args.length));
                 break;
             default:
                 Utils.message("No command with that name exists.");
@@ -113,6 +99,11 @@ public class Main {
         Repository.storeGitlet();
     }
 
-
+    private static void checkArgsLength(String[] args, int atLeast) {
+        if (args.length < 2) {
+            Utils.message("Incorrect operands.");
+            System.exit(0);
+        }
+    }
 
 }
