@@ -9,12 +9,12 @@ import java.io.File;
  *  deserialize it, and call the dump method on the resulting Object.
  *  The object must implement the gitlet.Dumpable interface for this
  *  to work.  For example, you might define your class like this:
- *
+ * <p>
  *        import java.io.Serializable;
  *        import java.util.TreeMap;
  *        class MyClass implements Serializeable, Dumpable {
  *            ...
- *            @Override
+ *            &#064;Override
  *            public void dump() {
  *               System.out.printf("size: %d%nmapping: %s%n", _size, _mapping);
  *            }
@@ -22,7 +22,7 @@ import java.io.File;
  *            int _size;
  *            TreeMap<String, String> _mapping = new TreeMap<>();
  *        }
- *
+ * <p>
  *  As illustrated, your dump method should print useful information from
  *  objects of your class.
  *  @author P. N. Hilfinger
@@ -34,11 +34,12 @@ public class DumpObj {
     public static void main(String... args) {
         var path = "";
         var files = new File(path).listFiles();
-        for (var file : files) {
-            Dumpable obj = Utils.readObject(file,
-                                            Dumpable.class);
-            obj.dump();
-            System.out.println("---");
+        if (files != null) {
+            for (var file : files) {
+                Dumpable obj = Utils.readObject(file, Dumpable.class);
+                obj.dump();
+                System.out.println("---");
+            }
         }
 
     }

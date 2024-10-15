@@ -10,10 +10,6 @@ import static gitlet.Repository.*;
 import static gitlet.Utils.join;
 
 public class FileUtils {
-    public static void delete(File folder, String filename) {
-        var file = join(folder, filename);
-        file.delete();
-    }
 
     public static void deleteAll(File folder) {
         var files = folder.listFiles();

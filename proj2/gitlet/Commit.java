@@ -13,10 +13,10 @@ import java.util.Locale;
  *  @author hashjenny
  */
 public class Commit implements Serializable, Dumpable {
-    /**
-     * List all instance variables of the Commit class here with a useful
-     * comment above them describing what that variable represents and how that
-     * variable is used. We've provided one example for `message`.
+    /*
+      List all instance variables of the Commit class here with a useful
+      comment above them describing what that variable represents and how that
+      variable is used. We've provided one example for `message`.
      */
 
     /** The message of this Commit. */

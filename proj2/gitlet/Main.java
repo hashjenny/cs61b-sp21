@@ -100,7 +100,7 @@ public class Main {
     }
 
     private static void checkArgsLength(String[] args, int atLeast) {
-        if (args.length < 2) {
+        if (args.length < atLeast) {
             Utils.message("Incorrect operands.");
             System.exit(0);
         }
