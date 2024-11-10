@@ -2,9 +2,15 @@ package byow.Core;
 
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
+import byow.TileEngine.Tileset;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 public class Engine {
     TERenderer ter = new TERenderer();
+    private final ArrayList<Rectangle> rectangles = new ArrayList<>();
     /* Feel free to change the width and height. */
     public static final int WIDTH = 80;
     public static final int HEIGHT = 30;
@@ -45,8 +51,89 @@ public class Engine {
         //
         // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
         // that works for many different input types.
+        var seed = getSeed(input);
+        Random rand = new Random(seed);
+        ter.initialize(WIDTH, HEIGHT);
+        TETile[][] finalWorldFrame = new TETile[WIDTH][HEIGHT];
+        init(finalWorldFrame);
 
-        TETile[][] finalWorldFrame = null;
+        Rectangle firstRectangle = Rectangle.getRandomRectangle(rand);
+        firstRectangle.drawWithEdge(finalWorldFrame);
+        rectangles.add(firstRectangle);
+        extendWorld(finalWorldFrame, firstRectangle, rand);
+
+        for (int i = 0; i < 5; i++) {
+            var rect = getRandomItem(rectangles, rand);
+            extendWorld(finalWorldFrame, rect, rand);
+        }
+
         return finalWorldFrame;
+    }
+
+    public static long getSeed(String input) {
+        var inputSeries = input.toCharArray();
+        var command = Character.toLowerCase(inputSeries[0]);
+        var seedBuilder = new StringBuilder();
+        var digitFlag = true;
+        for (int i = 1; i < inputSeries.length; i++) {
+            if (digitFlag && Character.isDigit(inputSeries[i])) {
+                seedBuilder.append(inputSeries[i]);
+            } else {
+                digitFlag = false;
+
+            }
+        }
+        var seedStr = seedBuilder.toString();
+        if (seedStr.isEmpty()) {
+            return 0;
+        }
+        return Long.parseLong(seedStr);
+    }
+
+    private static void init(TETile[][] tiles) {
+        for (int x = 0; x < WIDTH; x += 1) {
+            for (int y = 0; y < HEIGHT; y += 1) {
+                tiles[x][y] = Tileset.NOTHING;
+            }
+        }
+    }
+
+    public void render(TETile[][] tiles) {
+        ter.renderFrame(tiles);
+    }
+
+    public void extendWorld(TETile[][] tiles, Rectangle firstRec, Random rand) {
+        var rec = firstRec;
+        while (rec != null) {
+            // System.out.println("current rectangle:" + rec);
+            var newWidth = Rectangle.getRandomWidth(rand);
+            var newHeight = Rectangle.getRandomHeight(rand);
+            var validPoints = rec.getNearValidPoints(tiles, newWidth, newHeight);
+            if (!validPoints.isEmpty()) {
+                var point = getRandomItem(validPoints, rand);
+                var newRec = new Rectangle(newWidth, newHeight, point);
+                newRec.drawWithEdge(tiles);
+                rec = newRec;
+                rectangles.add(newRec);
+            } else {
+                rec = null;
+            }
+        }
+    }
+
+    public <T> T getRandomItem(List<T> list, Random rand) {
+        var index = rand.nextInt(list.size());
+        return list.get(index);
+    }
+
+    public boolean isValidHall(TETile[][] tiles, Point p) {
+        var x = p.x();
+        var y = p.y();
+        // 九宫格内都不是NOTHING
+        return tiles[x + 1][y].character() != ' ' && tiles[x - 1][y].character() != ' '
+                && tiles[x][y + 1].character() != ' ' && tiles[x][y - 1].character() != ' '
+                && tiles[x - 1][y + 1].character() != ' ' && tiles[x + 1][y - 1].character() != ' '
+                && tiles[x + 1][y + 1].character() != ' ' && tiles[x - 1][y - 1].character() != ' '
+                && tiles[x][y].character() != ' ';
     }
 }
