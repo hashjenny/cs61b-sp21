@@ -14,6 +14,15 @@ public class Engine {
     /* Feel free to change the width and height. */
     public static final int WIDTH = 80;
     public static final int HEIGHT = 30;
+    public final static int RECTANGLE_MAX_WIDTH = WIDTH / 8;
+    public final static int RECTANGLE_MIN_WIDTH = 3;
+    public final static int RECTANGLE_MAX_HEIGHT = HEIGHT / 5;
+    public final static int RECTANGLE_MIN_HEIGHT = 3;
+
+    public final static TETile WALL = Tileset.WALL;
+    public final static TETile BASE = Tileset.FLOWER;
+    public final static TETile HALL = Tileset.SAND;
+    public final static TETile PERSON = Tileset.AVATAR;
 
     /**
      * Method used for exploring a fresh world. This method should handle all inputs,
@@ -27,18 +36,18 @@ public class Engine {
      * of characters (for example, "n123sswwdasdassadwas", "n123sss:q", "lwww". The engine should
      * behave exactly as if the user typed these characters into the engine using
      * interactWithKeyboard.
-     *
+     * <p>
      * Recall that strings ending in ":q" should cause the game to quite save. For example,
      * if we do interactWithInputString("n123sss:q"), we expect the game to run the first
      * 7 commands (n123sss) and then quit and save. If we then do
      * interactWithInputString("l"), we should be back in the exact same state.
-     *
+     * <p>
      * In other words, both of these calls:
-     *   - interactWithInputString("n123sss:q")
-     *   - interactWithInputString("lww")
-     *
+     * - interactWithInputString("n123sss:q")
+     * - interactWithInputString("lww")
+     * <p>
      * should yield the exact same world state as:
-     *   - interactWithInputString("n123sssww")
+     * - interactWithInputString("n123sssww")
      *
      * @param input the input string to feed to your program
      * @return the 2D TETile[][] representing the state of the world
@@ -58,7 +67,7 @@ public class Engine {
         init(finalWorldFrame);
 
         Rectangle firstRectangle = Rectangle.getRandomRectangle(rand);
-        firstRectangle.drawWithEdge(finalWorldFrame);
+        firstRectangle.draw(finalWorldFrame);
         rectangles.add(firstRectangle);
         extendWorld(finalWorldFrame, firstRectangle, rand);
 
@@ -66,6 +75,8 @@ public class Engine {
             var rect = getRandomItem(rectangles, rand);
             extendWorld(finalWorldFrame, rect, rand);
         }
+
+        walk(finalWorldFrame, rand);
 
         return finalWorldFrame;
     }
@@ -112,7 +123,8 @@ public class Engine {
             if (!validPoints.isEmpty()) {
                 var point = getRandomItem(validPoints, rand);
                 var newRec = new Rectangle(newWidth, newHeight, point);
-                newRec.drawWithEdge(tiles);
+                newRec.draw(tiles);
+                rec.addNearPair(newRec);
                 rec = newRec;
                 rectangles.add(newRec);
             } else {
@@ -126,14 +138,56 @@ public class Engine {
         return list.get(index);
     }
 
-    public boolean isValidHall(TETile[][] tiles, Point p) {
-        var x = p.x();
-        var y = p.y();
-        // 九宫格内都不是NOTHING
-        return tiles[x + 1][y].character() != ' ' && tiles[x - 1][y].character() != ' '
-                && tiles[x][y + 1].character() != ' ' && tiles[x][y - 1].character() != ' '
-                && tiles[x - 1][y + 1].character() != ' ' && tiles[x + 1][y - 1].character() != ' '
-                && tiles[x + 1][y + 1].character() != ' ' && tiles[x - 1][y - 1].character() != ' '
-                && tiles[x][y].character() != ' ';
+    // public boolean isValidHall(TETile[][] tiles, Point p) {
+    //     var x = p.x();
+    //     var y = p.y();
+    //     // 九宫格内都不是NOTHING
+    //     return tiles[x + 1][y].character() != ' ' && tiles[x - 1][y].character() != ' '
+    //             && tiles[x][y + 1].character() != ' ' && tiles[x][y - 1].character() != ' '
+    //             && tiles[x - 1][y + 1].character() != ' ' && tiles[x + 1][y - 1].character() != ' '
+    //             && tiles[x + 1][y + 1].character() != ' ' && tiles[x - 1][y - 1].character() != ' '
+    //             && tiles[x][y].character() != ' ';
+    // }
+    //
+    // public boolean isValidHall(TETile[][] tiles, int x, int y) {
+    //     return isValidHall(tiles, new Point(x, y));
+    // }
+
+    public void walk(TETile[][] world, Random rand) {
+        for (var rect : rectangles) {
+            world[rect.getBasePoint().x()][rect.getBasePoint().y()] = BASE;
+            generateHall(world, rect, rand);
+        }
     }
+
+    public void generateHall(TETile[][] world, Rectangle rect, Random rand) {
+        var start = rect.getHallPoint();
+        for (var entry : rect.getPairs().entrySet()) {
+            var key = entry.getKey();
+            var value = entry.getValue();
+            var end = rect.getNearInnerPoint(key);
+
+            Point.drawHall(world, start);
+            Point.drawHall(world, end);
+            Point.drawHall(world, key);
+            Point.drawHall(world, value);
+
+            var x = start.x();
+            var y = start.y();
+            var endX = end.x();
+            var endY = end.y();
+            var desX = start.x() < end.x() ? 1 : -1;
+            var desY = start.y() < end.y() ? 1 : -1;
+            while (x != endX) {
+                x = x + desX;
+                Point.drawHall(world, x, y);
+            }
+            while (y != endY) {
+                y = y + desY;
+                Point.drawHall(world, x, y);
+            }
+        }
+
+    }
+
 }

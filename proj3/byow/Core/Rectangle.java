@@ -3,17 +3,18 @@ package byow.Core;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
 
-import java.util.ArrayList;
-import java.util.Random;
+import java.util.*;
 
-import static byow.Core.Engine.HEIGHT;
-import static byow.Core.Engine.WIDTH;
+import static byow.Core.Engine.*;
 
 public class Rectangle {
     private final int width;
     private final int height;
     private final Point basePoint;
-    private final ArrayList<Point> rectanglePoints;
+    private final ArrayList<Point> points;
+    private final HashSet<Point> outerPoints;
+    private final HashSet<Point> innerPoints;
+    private final HashMap<Point, Point> pairs;
 
     public int getWidth() {
         return width;
@@ -27,21 +28,37 @@ public class Rectangle {
         return basePoint;
     }
 
-    public ArrayList<Point> getRectanglePoints() {
-        return rectanglePoints;
+    public Point getHallPoint() {
+        return new Point(basePoint.x() + 1, basePoint.y() + 1);
+    }
+
+    public HashMap<Point, Point> getPairs() {
+        return pairs;
     }
 
     public Rectangle(int width, int height, Point p) {
         this.width = width;
         this.height = height;
         this.basePoint = p;
-
-        this.rectanglePoints = new ArrayList<>();
         var x = basePoint.x();
         var y = basePoint.y();
+
+        this.points = new ArrayList<>();
+        this.outerPoints = new HashSet<>();
+        this.innerPoints = new HashSet<>();
+
+        this.pairs = new HashMap<>();
+
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
-                rectanglePoints.add(new Point(x + i, y + j));
+                var point = new Point(x + i, y + j);
+                points.add(point);
+                if (i == 0 || i == width - 1
+                        || j == 0 || j == height - 1) {
+                    outerPoints.add(point);
+                } else {
+                    innerPoints.add(point);
+                }
             }
         }
     }
@@ -54,12 +71,23 @@ public class Rectangle {
                 + ", basePoint={" + basePoint.x() + "," + basePoint.y() + "}";
     }
 
-    public boolean contains(Point p) {
-        return rectanglePoints.contains(p);
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) return true;
+        if (obj == null || obj.getClass() != this.getClass()) return false;
+        var that = (Rectangle) obj;
+        return this.width == that.width &&
+                this.height == that.height &&
+                this.basePoint.equals(that.basePoint);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(width, height, basePoint);
     }
 
     public boolean isValid(TETile[][] world) {
-        for (Point p : rectanglePoints) {
+        for (Point p : points) {
             if (!p.isValid(world)) {
                 return false;
             }
@@ -89,31 +117,17 @@ public class Rectangle {
         return validPoints;
     }
 
-    public void drawWithEdge(TETile[][] world) {
-        for (int i = basePoint.x(); i < basePoint.x() + width; i++) {
-            for (int j = basePoint.y(); j < basePoint.y() + height; j++) {
-                if (i == basePoint.x() || i == basePoint.x() + width - 1
-                        || j == basePoint.y() || j == basePoint.y() + height - 1) {
-                    world[i][j] = Tileset.WATER;
-                } else {
-                    world[i][j] = Tileset.WALL;
-                }
-            }
-        }
-
-    }
-
     public void draw(TETile[][] world) {
-        for (var p : rectanglePoints) {
-            world[p.x()][p.y()] = Tileset.WALL;
+        // for (Point p : outerPoints) {
+        //     world[p.x()][p.y()] = Tileset.WALL;
+        // }
+        // for (Point p : innerPoints) {
+        //     world[p.x()][p.y()] = Tileset.WATER;
+        // }
+        for (var p : points) {
+            world[p.x()][p.y()] = WALL;
         }
     }
-
-    private final static int RECTANGLE_MAX_WIDTH = WIDTH / 8;
-    private final static int RECTANGLE_MIN_WIDTH = 3;
-    private final static int RECTANGLE_MAX_HEIGHT = HEIGHT / 5;
-    private final static int RECTANGLE_MIN_HEIGHT = 3;
-
 
     public static int getRandomLength(Random rand, int min, int max) {
         return RandomUtils.uniform(rand, min, max);
@@ -140,4 +154,45 @@ public class Rectangle {
         return new Rectangle(width, height, base);
     }
 
+    // 获取每个相邻的矩形的2个邻接点
+    public void addNearPair(Rectangle rect2) {
+        HashMap<Point, Point> map = new HashMap<>();
+        for (Point p1 : outerPoints) {
+            for (Point p2 : rect2.outerPoints) {
+                if (p1.isNear(p2)) {
+                    map.put(p1, p2);
+                }
+            }
+        }
+        var minPoint = Collections.min(map.keySet());
+        var maxPoint = Collections.max(map.keySet());
+        map.remove(minPoint);
+        map.remove(maxPoint);
+
+        var times = 2;
+        for (var entry : map.entrySet()) {
+            if (times > 0) {
+                pairs.put(entry.getKey(), entry.getValue());
+                rect2.getPairs().put(entry.getValue(), entry.getKey());
+                times --;
+            } else {
+                break;
+            }
+        }
+    }
+
+    public Point getNearInnerPoint(Point p) {
+        var x = p.x();
+        var y = p.y();
+        if (innerPoints.contains(new Point(x + 1, y))) {
+            return new Point(x + 1, y);
+        } else if (innerPoints.contains(new Point(x - 1, y))) {
+            return new Point(x - 1, y);
+        } else if (innerPoints.contains(new Point(x, y + 1))) {
+            return new Point(x, y + 1);
+        } else if (innerPoints.contains(new Point(x, y - 1))) {
+            return new Point(x, y - 1);
+        }
+        return null;
+    }
 }
