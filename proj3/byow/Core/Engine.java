@@ -93,7 +93,9 @@ public class Engine {
     }
 
     public void render(TETile[][] world, String clickName) {
-
+        if (isQuit) {
+            StdDraw.close();
+        }
         ter.renderFrame(world);
         StdDraw.setPenColor(Color.WHITE);
         StdDraw.text(4, HEIGHT - 4, clickName);
@@ -147,7 +149,6 @@ public class Engine {
                 break;
             case 'q':
                 if (isQuit) {
-                    isQuit = false;
                     saveWorld(world);
                 }
                 break;
