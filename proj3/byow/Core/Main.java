@@ -14,7 +14,7 @@ public class Main {
             Engine engine = new Engine();
             var world = engine.interactWithInputString(args[1]);
             System.out.println(engine.toString());
-            engine.render(world);
+            // engine.render(world);
             // DO NOT CHANGE THESE LINES YET ;)
         } else if (args.length == 2 && args[0].equals("-p")) {
             System.out.println("Coming soon.");

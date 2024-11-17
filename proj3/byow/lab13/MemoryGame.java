@@ -72,13 +72,13 @@ public class MemoryGame {
         StdDraw.setPenColor(Color.WHITE);
         StdDraw.enableDoubleBuffering();
 
-        //TODO: Initialize random number generator
+        // Initialize random number generator
         this.rand = new Random(seed);
 
     }
 
     public String generateRandomString(int n) {
-        //TODO: Generate random string of letters of length n
+        // Generate random string of letters of length n
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < n; i++) {
             sb.append(CHARACTERS[RandomUtils.uniform(rand, 26)]);
@@ -88,9 +88,9 @@ public class MemoryGame {
 
     public void drawFrame(String s) {
         StdDraw.clear(Color.BLACK);
-        //TODO: Take the string and display it in the center of the screen
+        // Take the string and display it in the center of the screen
         StdDraw.text((double) this.width / 2, (double) this.height / 2, s);
-        //TODO: If game is not over, display relevant game information at the top of the screen
+        // If game is not over, display relevant game information at the top of the screen
         if (!gameOver) {
             StdDraw.line(0, 38, 40, 38);
             StdDraw.text(4, 39, getLeftTitle());
@@ -101,7 +101,7 @@ public class MemoryGame {
     }
 
     public void flashSequence(String letters) throws InterruptedException {
-        //TODO: Display each character in letters, making sure to blank the screen between letters
+        // Display each character in letters, making sure to blank the screen between letters
         playerTurn = false;
         var str = letters.split("");
         for (var s : str) {
@@ -115,7 +115,7 @@ public class MemoryGame {
     }
 
     public String solicitNCharsInput(int n) {
-        //TODO: Read n letters of player input
+        // Read n letters of player input
         var s = "";
         drawFrame("");
         while (n > 0) {
@@ -129,9 +129,9 @@ public class MemoryGame {
     }
 
     public void startGame() throws InterruptedException {
-        //TODO: Set any relevant variables before the game starts
+        // Set any relevant variables before the game starts
         var str = generateRandomString(this.round);
-        //TODO: Establish Engine loop
+        // Establish Engine loop
         while (!gameOver) {
             flashSequence(str);
             var typedString = solicitNCharsInput(this.round);

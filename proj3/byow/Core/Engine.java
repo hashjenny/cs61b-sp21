@@ -62,7 +62,7 @@ public class Engine {
         // that works for many different input types.
         var seed = getSeed(input);
         Random rand = new Random(seed);
-        ter.initialize(WIDTH, HEIGHT);
+        // ter.initialize(WIDTH, HEIGHT);
         TETile[][] finalWorldFrame = new TETile[WIDTH][HEIGHT];
         init(finalWorldFrame);
 
