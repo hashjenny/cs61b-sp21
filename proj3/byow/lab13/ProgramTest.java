@@ -1,6 +1,6 @@
 package byow.lab13;
 
-import edu.princeton.cs.algs4.StdDraw;
+import edu.princeton.cs.introcs.StdDraw;
 import org.junit.Test;
 
 import java.awt.*;

@@ -2,20 +2,16 @@ package byow.Core;
 
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static byow.Core.Engine.getSeed;
 
 public class ProgramTest {
 
     @Test
     public void getSeedTest() {
-        var seed = getSeed("n123sssww");
+        var seed = new Command("n123sssww").getSeed();
         System.out.println(seed);
-        seed = getSeed("lww");
+        seed = new Command("lww").getSeed();
         System.out.println(seed);
-        seed = getSeed("n123sss:q");
+        seed = new Command("n123sss:q").getSeed();
         System.out.println(seed);
     }
 
@@ -34,8 +30,10 @@ public class ProgramTest {
         }
     }
 
-    public static void main(String[] args) {
-
+    public static void main(String[] args) throws InterruptedException {
+        Engine engine = new Engine();
+        var world = engine.interactWithInputString(args[1]);
+        engine.start(world);
     }
 
 

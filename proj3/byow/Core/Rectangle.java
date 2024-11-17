@@ -1,7 +1,6 @@
 package byow.Core;
 
 import byow.TileEngine.TETile;
-import byow.TileEngine.Tileset;
 
 import java.util.*;
 
@@ -28,7 +27,7 @@ public class Rectangle {
         return basePoint;
     }
 
-    public Point getHallPoint() {
+    public Point getStartPoint() {
         return new Point(basePoint.x() + 1, basePoint.y() + 1);
     }
 
@@ -73,12 +72,16 @@ public class Rectangle {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == this) return true;
-        if (obj == null || obj.getClass() != this.getClass()) return false;
+        if (obj == this) {
+            return true;
+        }
+        if (obj == null || obj.getClass() != this.getClass()) {
+            return false;
+        }
         var that = (Rectangle) obj;
-        return this.width == that.width &&
-                this.height == that.height &&
-                this.basePoint.equals(that.basePoint);
+        return this.width == that.width
+                && this.height == that.height
+                && this.basePoint.equals(that.basePoint);
     }
 
     @Override
@@ -125,7 +128,7 @@ public class Rectangle {
         //     world[p.x()][p.y()] = Tileset.WATER;
         // }
         for (var p : points) {
-            world[p.x()][p.y()] = WALL;
+            Point.drawWall(world, p);
         }
     }
 
@@ -174,7 +177,7 @@ public class Rectangle {
             if (times > 0) {
                 pairs.put(entry.getKey(), entry.getValue());
                 rect2.getPairs().put(entry.getValue(), entry.getKey());
-                times --;
+                times--;
             } else {
                 break;
             }
