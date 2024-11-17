@@ -32,10 +32,10 @@ public class Command {
         var seedBuilder = new StringBuilder();
         var pos = 1;
         for (; pos < inputSeries.length; pos++) {
-            if (inputSeries[pos] == 's') {
-                break;
-            } else {
+            if (Character.isDigit(inputSeries[pos])) {
                 seedBuilder.append(inputSeries[pos]);
+            } else {
+                break;
             }
         }
         var seedStr = seedBuilder.toString();

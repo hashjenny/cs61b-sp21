@@ -101,12 +101,16 @@ public class Rectangle {
     public ArrayList<Point> getNearValidPoints(TETile[][] world, int w, int h) {
         var nearPoints = new ArrayList<Point>();
         // east & west
-        for (int i = basePoint.y() + RECTANGLE_MIN_HEIGHT - h; i < basePoint.y() + height - RECTANGLE_MIN_HEIGHT; i++) {
+        for (int i = basePoint.y() + RECTANGLE_MIN_HEIGHT - h;
+             i < basePoint.y() + height - RECTANGLE_MIN_HEIGHT;
+             i++) {
             nearPoints.add(new Point(basePoint.x() + width, i));
             nearPoints.add(new Point(basePoint.x() - w, i));
         }
         // north & south
-        for (int i = basePoint.x() + RECTANGLE_MIN_WIDTH - w; i < basePoint.x() + width - RECTANGLE_MIN_WIDTH; i++) {
+        for (int i = basePoint.x() + RECTANGLE_MIN_WIDTH - w;
+             i < basePoint.x() + width - RECTANGLE_MIN_WIDTH;
+             i++) {
             nearPoints.add(new Point(i, basePoint.y() + height));
             nearPoints.add(new Point(i, basePoint.y() - h));
         }
@@ -152,8 +156,12 @@ public class Rectangle {
 
     public static Rectangle getRandomRectangle(Random rand) {
         var base = getRandomPoint(rand);
-        var width = getRandomLength(rand, RECTANGLE_MIN_WIDTH, Math.min(RECTANGLE_MAX_WIDTH, WIDTH - base.x()));
-        var height = getRandomLength(rand, RECTANGLE_MIN_HEIGHT, Math.min(RECTANGLE_MAX_HEIGHT, HEIGHT - base.y()));
+        var width = getRandomLength(rand,
+                RECTANGLE_MIN_WIDTH,
+                Math.min(RECTANGLE_MAX_WIDTH, WIDTH - base.x()));
+        var height = getRandomLength(rand,
+                RECTANGLE_MIN_HEIGHT,
+                Math.min(RECTANGLE_MAX_HEIGHT, HEIGHT - base.y()));
         return new Rectangle(width, height, base);
     }
 
