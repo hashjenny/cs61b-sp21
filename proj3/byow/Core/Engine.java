@@ -65,7 +65,7 @@ public class Engine {
         // that works for many different input types.
         var command = new Command(input);
         seed = command.getSeed();
-        Random rand = new Random(seed);
+        var rand = new Random(seed);
         TETile[][] world = new TETile[WIDTH][HEIGHT];
         init(world);
 
@@ -94,11 +94,11 @@ public class Engine {
 
     public void render(TETile[][] world, String clickName) {
         if (isQuit) {
-            StdDraw.close();
+            System.exit(0);
         }
         ter.renderFrame(world);
         StdDraw.setPenColor(Color.WHITE);
-        StdDraw.text(4, HEIGHT - 4, clickName);
+        StdDraw.text(2, HEIGHT - 2, clickName);
         StdDraw.show();
     }
 
