@@ -13,9 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+
 public class Engine {
     TERenderer ter = new TERenderer();
-    private final ArrayList<Rectangle> rectangles = new ArrayList<>();
+
     /* Feel free to change the width and height. */
     public static final int WIDTH = 80;
     public static final int HEIGHT = 30;
@@ -24,9 +25,11 @@ public class Engine {
     public static final int RECTANGLE_MIN_WIDTH = 3;
     public static final int RECTANGLE_MAX_HEIGHT = HEIGHT / 5;
     public static final int RECTANGLE_MIN_HEIGHT = 3;
+
     // nothing: ' ', wall: '#', hall: '·', person: '@'
     public static final String WORLD_FILE = "world.txt";
 
+    private final ArrayList<Rectangle> rectangles = new ArrayList<>();
     private final Person person = new Person(0, 0);
     private long seed = 0;
     private boolean commandMode = false;
@@ -37,12 +40,81 @@ public class Engine {
     private Point startPoint;
     private TETile[][] initWorld;
     private final ArrayList<Character> history = new ArrayList<>();
+
     /**
      * Method used for exploring a fresh world. This method should handle all inputs,
      * including inputs from the main menu.
      */
-    public void interactWithKeyboard() {
+    public void interactWithKeyboard() throws InterruptedException {
+        long seed = 0;
+        var rand = new Random(seed);
+        var world = new TETile[WIDTH][HEIGHT];
+        init(world);
 
+        ter.initialize(WIDTH, ALL_HEIGHT);
+        startScreen(world, rand);
+        render(world, "");
+        gameLoop(world);
+    }
+
+    private void inputSeed(TETile[][] world, Random rand) {
+        var noSeed = true;
+        var seedBuilder = new StringBuilder();
+        while (noSeed) {
+            StdDraw.clear(Color.BLACK);
+            StdDraw.setPenColor(Color.WHITE);
+            StdDraw.text((double) WIDTH / 2, (double) ALL_HEIGHT / 2,
+                    "Input seed: " + seedBuilder);
+            StdDraw.text((double) WIDTH / 2, (double) ALL_HEIGHT / 2 - 2,
+                    "(Type 'S' to stop input seed.)");
+            StdDraw.show();
+            if (StdDraw.hasNextKeyTyped()) {
+                var key = StdDraw.nextKeyTyped();
+                if (key != 's') {
+                    seedBuilder.append(key);
+                } else {
+                    noSeed = false;
+                    var seedStr = seedBuilder.toString();
+                    if (seedStr.isEmpty()) {
+                        rand.setSeed(0);
+                    } else {
+                        rand.setSeed(Long.parseLong(seedStr));
+                    }
+                }
+            }
+        }
+        generateWorld(world, rand);
+    }
+
+    private void startScreen(TETile[][] world, Random rand) {
+        var startFlag = true;
+        while (startFlag) {
+            StdDraw.clear(Color.BLACK);
+            StdDraw.setPenColor(Color.WHITE);
+            StdDraw.text((double) WIDTH / 2, (double) ALL_HEIGHT * 2 / 3, "CS61B: THE GAME");
+            StdDraw.text((double) WIDTH / 2, (double) ALL_HEIGHT * 2 / 3 - 4, "New Game (N)");
+            StdDraw.text((double) WIDTH / 2, (double) ALL_HEIGHT * 2 / 3 - 8, "Load Game (L)");
+            StdDraw.text((double) WIDTH / 2, (double) ALL_HEIGHT * 2 / 3 - 12, "Quit (Q)");
+            StdDraw.show();
+            if (StdDraw.hasNextKeyTyped()) {
+                var key = StdDraw.nextKeyTyped();
+                switch (key) {
+                    case 'n':
+                        inputSeed(world, rand);
+                        startFlag = false;
+                        break;
+                    case 'l':
+                        loadWorld(world, rand);
+                        startFlag = false;
+                        break;
+                    case 'q':
+                        System.exit(0);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     /**
@@ -187,6 +259,10 @@ public class Engine {
     public void start(TETile[][] world) throws InterruptedException {
         ter.initialize(WIDTH, ALL_HEIGHT);
         render(world, "");
+        gameLoop(world);
+    }
+
+    private void gameLoop(TETile[][] world) throws InterruptedException {
         while (true) {
             if (!isReplay) {
                 waitForInput(world);
@@ -207,7 +283,6 @@ public class Engine {
                     initWorld = TETile.copyOf(temp);
                 }
             }
-
         }
     }
 

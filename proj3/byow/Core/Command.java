@@ -6,7 +6,6 @@ public class Command {
     private final char key;
     private long seed;
     private final ArrayList<Character> actions;
-    private boolean isQuit;
 
     public char getKey() {
         return key;
@@ -18,10 +17,6 @@ public class Command {
 
     public ArrayList<Character> getActions() {
         return actions;
-    }
-
-    public boolean isQuit() {
-        return isQuit;
     }
 
     public Command(String input) {
@@ -49,7 +44,6 @@ public class Command {
         }
 
         actions = new ArrayList<>();
-        isQuit = false;
         while (pos < inputSeries.length) {
             var c = inputSeries[pos];
             actions.add(c);

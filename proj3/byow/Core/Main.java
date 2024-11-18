@@ -6,15 +6,14 @@ package byow.Core;
  * in either keyboard or input string mode.
  */
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         if (args.length > 2) {
             System.out.println("Can only have two arguments - the flag and input string");
             System.exit(0);
         } else if (args.length == 2 && args[0].equals("-s")) {
             Engine engine = new Engine();
-            var world = engine.interactWithInputString(args[1]);
-            System.out.println(engine.toString());
-            // engine.render(world);
+            engine.interactWithInputString(args[1]);
+            System.out.println(engine);
             // DO NOT CHANGE THESE LINES YET ;)
         } else if (args.length == 2 && args[0].equals("-p")) {
             System.out.println("Coming soon.");

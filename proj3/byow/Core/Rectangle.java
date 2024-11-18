@@ -125,12 +125,6 @@ public class Rectangle {
     }
 
     public void draw(TETile[][] world) {
-        // for (Point p : outerPoints) {
-        //     world[p.x()][p.y()] = Tileset.WALL;
-        // }
-        // for (Point p : innerPoints) {
-        //     world[p.x()][p.y()] = Tileset.WATER;
-        // }
         for (var p : points) {
             Point.drawWall(world, p);
         }
