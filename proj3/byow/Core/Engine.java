@@ -32,6 +32,11 @@ public class Engine {
     private boolean commandMode = false;
     private boolean isQuit = false;
 
+    // replay
+    private boolean isReplay = false;
+    private Point startPoint;
+    private TETile[][] initWorld;
+    private final ArrayList<Character> history = new ArrayList<>();
     /**
      * Method used for exploring a fresh world. This method should handle all inputs,
      * including inputs from the main menu.
@@ -98,13 +103,13 @@ public class Engine {
         }
     }
 
-    public void render(TETile[][] world, String clickName) {
+    public void render(TETile[][] world, String mousePointTo) {
         if (isQuit) {
             System.exit(0);
         }
         ter.renderFrame(world);
         StdDraw.setPenColor(Color.WHITE);
-        StdDraw.text(2, ALL_HEIGHT - 1, clickName);
+        StdDraw.text(5, ALL_HEIGHT - 1, mousePointTo);
         var current = LocalDateTime.now();
         var formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         var timeString = current.format(formatter);
@@ -117,18 +122,34 @@ public class Engine {
             case 'W':
             case 'w':
                 person.move(world, person.getX(), person.getY() + 1);
+                if (!isReplay) {
+                    history.add(c);
+                }
                 break;
             case 'S':
             case 's':
                 person.move(world, person.getX(), person.getY() - 1);
+                if (!isReplay) {
+                    history.add(c);
+                }
                 break;
             case 'A':
             case 'a':
                 person.move(world, person.getX() - 1, person.getY());
+                if (!isReplay) {
+                    history.add(c);
+                }
                 break;
             case 'D':
             case 'd':
                 person.move(world, person.getX() + 1, person.getY());
+                if (!isReplay) {
+                    history.add(c);
+                }
+                break;
+            case 'R':
+            case 'r':
+                isReplay = true;
                 break;
             case ':':
                 commandMode = true;
@@ -167,10 +188,26 @@ public class Engine {
         ter.initialize(WIDTH, ALL_HEIGHT);
         render(world, "");
         while (true) {
-            waitForInput(world);
-            String clickName = waitForMouse(world);
-            Thread.sleep(80);
-            render(world, clickName);
+            if (!isReplay) {
+                waitForInput(world);
+                String here = waitForMouse(world);
+                Thread.sleep(80);
+                render(world, here);
+            } else {
+                if (!history.isEmpty()) {
+                    var temp = TETile.copyOf(initWorld);
+                    person.setPos(startPoint);
+                    render(initWorld, "Replay Mode");
+                    for (var c : history) {
+                        action(initWorld, c);
+                        Thread.sleep(500);
+                        render(initWorld, "Replay Mode");
+                    }
+                    isReplay = false;
+                    initWorld = TETile.copyOf(temp);
+                }
+            }
+
         }
     }
 
@@ -187,6 +224,7 @@ public class Engine {
                     if (lineCounter <= HEIGHT) {
                         for (int x = 0; x < WIDTH; x += 1) {
                             if (characterSeries[x] == '@') {
+                                startPoint = new Point(x, HEIGHT - lineCounter);
                                 person.setPos(new Point(x, HEIGHT - lineCounter));
                             }
                             world[x][HEIGHT - lineCounter] = characterToTile(characterSeries[x]);
@@ -195,6 +233,7 @@ public class Engine {
                 }
                 lineCounter++;
             }
+            initWorld = TETile.copyOf(world);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -226,6 +265,10 @@ public class Engine {
         var pos = firstRectangle.getStartPoint();
         person.setPos(pos);
         Point.drawPerson(world, person.getX(), person.getY());
+
+        // init state
+        startPoint = pos;
+        initWorld = TETile.copyOf(world);
     }
 
     public void executeCommand(TETile[][] world, Command command) {
