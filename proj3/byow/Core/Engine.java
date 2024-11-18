@@ -7,6 +7,8 @@ import edu.princeton.cs.introcs.StdDraw;
 
 import java.awt.*;
 import java.io.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -17,6 +19,7 @@ public class Engine {
     /* Feel free to change the width and height. */
     public static final int WIDTH = 80;
     public static final int HEIGHT = 30;
+    public static final int ALL_HEIGHT = 32;
     public static final int RECTANGLE_MAX_WIDTH = WIDTH / 8;
     public static final int RECTANGLE_MIN_WIDTH = 3;
     public static final int RECTANGLE_MAX_HEIGHT = HEIGHT / 5;
@@ -26,12 +29,15 @@ public class Engine {
 
     private final Person person = new Person(0, 0);
     private long seed = 0;
+    private boolean commandMode = false;
     private boolean isQuit = false;
+
     /**
      * Method used for exploring a fresh world. This method should handle all inputs,
      * including inputs from the main menu.
      */
     public void interactWithKeyboard() {
+
     }
 
     /**
@@ -83,7 +89,6 @@ public class Engine {
         return world;
     }
 
-
     private static void init(TETile[][] tiles) {
         for (int x = 0; x < WIDTH; x += 1) {
             for (int y = 0; y < HEIGHT; y += 1) {
@@ -98,18 +103,45 @@ public class Engine {
         }
         ter.renderFrame(world);
         StdDraw.setPenColor(Color.WHITE);
-        StdDraw.text(2, HEIGHT - 2, clickName);
+        StdDraw.text(2, ALL_HEIGHT - 1, clickName);
+        var current = LocalDateTime.now();
+        var formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        var timeString = current.format(formatter);
+        StdDraw.text(WIDTH - 6, ALL_HEIGHT - 1, timeString);
         StdDraw.show();
     }
 
-    public void start(TETile[][] world) throws InterruptedException {
-        ter.initialize(WIDTH, HEIGHT);
-        render(world, "");
-        while (true) {
-            waitForInput(world);
-            String clickName = waitForClick(world);
-            Thread.sleep(80);
-            render(world, clickName);
+    public void action(TETile[][] world, char c) {
+        switch (c) {
+            case 'W':
+            case 'w':
+                person.move(world, person.getX(), person.getY() + 1);
+                break;
+            case 'S':
+            case 's':
+                person.move(world, person.getX(), person.getY() - 1);
+                break;
+            case 'A':
+            case 'a':
+                person.move(world, person.getX() - 1, person.getY());
+                break;
+            case 'D':
+            case 'd':
+                person.move(world, person.getX() + 1, person.getY());
+                break;
+            case ':':
+                commandMode = true;
+                break;
+            case 'Q':
+            case 'q':
+                if (commandMode) {
+                    saveWorld(world);
+                    commandMode = false;
+                    isQuit = true;
+                }
+                break;
+            default:
+                break;
         }
     }
 
@@ -120,40 +152,24 @@ public class Engine {
         }
     }
 
-    private String waitForClick(TETile[][] world) {
-        String clickName = "";
-        if (StdDraw.isMousePressed()) {
-            var x = (int) StdDraw.mouseX();
-            var y = (int) StdDraw.mouseY();
-            clickName = characterToTileName(world[x][y].character());
+    private String waitForMouse(TETile[][] world) {
+        String here = "";
+        var x = (int) StdDraw.mouseX();
+        var y = (int) StdDraw.mouseY();
+        if (y >= 0 && y < HEIGHT && x >= 0 && x < WIDTH) {
+            here = characterToTileName(world[x][y].character());
         }
-        return clickName;
+        return here;
     }
 
-    public void action(TETile[][] world, char c) {
-        switch (c) {
-            case 'w':
-                person.move(world, person.getX(), person.getY() + 1);
-                break;
-            case 's':
-                person.move(world, person.getX(), person.getY() - 1);
-                break;
-            case 'a':
-                person.move(world, person.getX() - 1, person.getY());
-                break;
-            case 'd':
-                person.move(world, person.getX() + 1, person.getY());
-                break;
-            case ':':
-                isQuit = true;
-                break;
-            case 'q':
-                if (isQuit) {
-                    saveWorld(world);
-                }
-                break;
-            default:
-                break;
+    public void start(TETile[][] world) throws InterruptedException {
+        ter.initialize(WIDTH, ALL_HEIGHT);
+        render(world, "");
+        while (true) {
+            waitForInput(world);
+            String clickName = waitForMouse(world);
+            Thread.sleep(80);
+            render(world, clickName);
         }
     }
 
@@ -233,12 +249,6 @@ public class Engine {
         }
     }
 
-    public <T> T getRandomItem(List<T> list, Random rand) {
-        var index = rand.nextInt(list.size());
-        return list.get(index);
-    }
-
-
     public void generateFloor(TETile[][] world) {
         for (var rect : rectangles) {
             // world[rect.getBasePoint().x()][rect.getBasePoint().y()] = BASE;
@@ -274,6 +284,11 @@ public class Engine {
             }
         }
 
+    }
+
+    public <T> T getRandomItem(List<T> list, Random rand) {
+        var index = rand.nextInt(list.size());
+        return list.get(index);
     }
 
     public static TETile characterToTile(char c) {

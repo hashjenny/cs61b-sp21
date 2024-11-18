@@ -50,12 +50,6 @@ public class Command {
         pos++;
         while (pos < inputSeries.length) {
             var c = inputSeries[pos];
-            // if (c == 'w' || c == 'a' || c == 's' || c == 'd') {
-            //     actions.add(c);
-            // } else if (c == ':' && inputSeries[pos + 1] == 'q') {
-            //     isQuit = true;
-            //     break;
-            // }
             actions.add(c);
             pos++;
         }
