@@ -77,12 +77,13 @@ public class Engine {
 
         switch (command.getKey()) {
             case 'n':
-                generateWorld(world, rand, command);
+                generateWorld(world, rand);
+                executeCommand(world, command);
                 break;
             case 'l':
                 loadWorld(world, rand);
+                executeCommand(world, command);
                 break;
-            case 'r':
             default:
                 break;
         }
@@ -185,6 +186,9 @@ public class Engine {
                     var characterSeries = line.toCharArray();
                     if (lineCounter <= HEIGHT) {
                         for (int x = 0; x < WIDTH; x += 1) {
+                            if (characterSeries[x] == '@') {
+                                person.setPos(new Point(x, HEIGHT - lineCounter));
+                            }
                             world[x][HEIGHT - lineCounter] = characterToTile(characterSeries[x]);
                         }
                     }
@@ -206,7 +210,7 @@ public class Engine {
         }
     }
 
-    public void generateWorld(TETile[][] world, Random rand, Command command) {
+    public void generateWorld(TETile[][] world, Random rand) {
         // draw wall
         Rectangle firstRectangle = Rectangle.getRandomRectangle(rand);
         firstRectangle.draw(world);
@@ -222,6 +226,9 @@ public class Engine {
         var pos = firstRectangle.getStartPoint();
         person.setPos(pos);
         Point.drawPerson(world, person.getX(), person.getY());
+    }
+
+    public void executeCommand(TETile[][] world, Command command) {
         // draw action
         if (command != null) {
             for (var c : command.getActions()) {
