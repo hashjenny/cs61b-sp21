@@ -124,11 +124,17 @@ public class BYOWClient {
 
     public static void main(String[] args) throws IOException {
         System.out.println("BYOW Client. Please Enter the following information to connect to a server...");
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("IP Address: ");
-        String ip = scanner.next();
-        System.out.print("Port (this must be a number): ");
-        int port = scanner.nextInt();
+        // Scanner scanner = new Scanner(System.in);
+        // System.out.print("IP Address: ");
+        // String ip = scanner.next();
+
+        // System.out.print("Port (this must be a number): ");
+        // int port = scanner.nextInt();
+
+        System.out.print("IP Address: localhost\n");
+        String ip = "localhost";
+        System.out.print("Port (this must be a number):  4455\n");
+        int port = 4455;
 
         BYOWClient client = new BYOWClient();
         client.startConnection(ip, port); //ip port changes depending on link supplied by ngrok

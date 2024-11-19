@@ -1,5 +1,6 @@
 package byow.Core;
 
+import byow.Networking.BYOWServer;
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
@@ -270,19 +271,23 @@ public class Engine {
                 Thread.sleep(80);
                 render(world, here);
             } else {
-                if (!history.isEmpty()) {
-                    var temp = TETile.copyOf(initWorld);
-                    person.setPos(startPoint);
-                    render(initWorld, "Replay Mode");
-                    for (var c : history) {
-                        action(initWorld, c);
-                        Thread.sleep(500);
-                        render(initWorld, "Replay Mode");
-                    }
-                    isReplay = false;
-                    initWorld = TETile.copyOf(temp);
-                }
+                replay();
             }
+        }
+    }
+
+    private void replay() throws InterruptedException {
+        if (!history.isEmpty()) {
+            var temp = TETile.copyOf(initWorld);
+            person.setPos(startPoint);
+            render(initWorld, "Replay Mode");
+            for (var c : history) {
+                action(initWorld, c);
+                Thread.sleep(500);
+                render(initWorld, "Replay Mode");
+            }
+            isReplay = false;
+            initWorld = TETile.copyOf(temp);
         }
     }
 
@@ -439,6 +444,125 @@ public class Engine {
                 return "Person";
             default:
                 return "Nothing";
+        }
+    }
+
+    // game sharing
+    public void interactWithRemoteClient(String port) throws IOException, InterruptedException {
+        var server = new BYOWServer(Integer.parseInt(port));
+
+        long seed = 0;
+        var rand = new Random(seed);
+        var world = new TETile[WIDTH][HEIGHT];
+        init(world);
+
+
+        server.sendCanvasConfig(WIDTH * 16, ALL_HEIGHT * 16);
+        ter.initialize(WIDTH, ALL_HEIGHT);
+
+        startScreenRemote(world, rand, server);
+        renderRemote(world, "", server);
+        gameLoopRemote(world, server);
+    }
+
+    private void startScreenRemote(TETile[][] world, Random rand, BYOWServer server) {
+        var startFlag = true;
+        StdDraw.clear(Color.BLACK);
+        StdDraw.setPenColor(Color.WHITE);
+        StdDraw.text((double) WIDTH / 2, (double) ALL_HEIGHT * 2 / 3, "CS61B: THE GAME (REMOTE)");
+        StdDraw.text((double) WIDTH / 2, (double) ALL_HEIGHT * 2 / 3 - 4, "New Game (N)");
+        StdDraw.text((double) WIDTH / 2, (double) ALL_HEIGHT * 2 / 3 - 8, "Load Game (L)");
+        StdDraw.text((double) WIDTH / 2, (double) ALL_HEIGHT * 2 / 3 - 12, "Quit (Q)");
+        StdDraw.show();
+        server.sendCanvas();
+        while (startFlag) {
+            if (server.clientHasKeyTyped()) {
+                var key = server.clientNextKeyTyped();
+                switch (key) {
+                    case 'n':
+                        inputSeedRemote(world, rand, server);
+                        startFlag = false;
+                        break;
+                    case 'l':
+                        loadWorld(world, rand);
+                        startFlag = false;
+                        break;
+                    case 'q':
+                        System.exit(0);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+
+    private void inputSeedRemote(TETile[][] world, Random rand, BYOWServer server) {
+        var noSeed = true;
+        var seedBuilder = new StringBuilder();
+        while (noSeed) {
+            StdDraw.clear(Color.BLACK);
+            StdDraw.setPenColor(Color.WHITE);
+            StdDraw.text((double) WIDTH / 2, (double) ALL_HEIGHT / 2,
+                    "Input seed: " + seedBuilder);
+            StdDraw.text((double) WIDTH / 2, (double) ALL_HEIGHT / 2 - 2,
+                    "(Type 'S' to stop input seed.)");
+            StdDraw.show();
+            server.sendCanvas();
+            if (server.clientHasKeyTyped()) {
+                var key = server.clientNextKeyTyped();
+                if (key != 's') {
+                    seedBuilder.append(key);
+                } else {
+                    noSeed = false;
+                    var seedStr = seedBuilder.toString();
+                    if (seedStr.isEmpty()) {
+                        rand.setSeed(0);
+                    } else {
+                        rand.setSeed(Long.parseLong(seedStr));
+                    }
+                }
+            }
+        }
+        generateWorld(world, rand);
+    }
+
+    public void renderRemote(TETile[][] world, String mousePointTo, BYOWServer server) {
+        render(world, mousePointTo);
+        server.sendCanvas();
+    }
+
+    private void gameLoopRemote(TETile[][] world, BYOWServer server) throws InterruptedException {
+        while (true) {
+            if (!isReplay) {
+                waitForInputRemote(world, server);
+                Thread.sleep(80);
+                renderRemote(world, "", server);
+            } else {
+                replayRemote(server);
+            }
+        }
+    }
+
+    private void replayRemote(BYOWServer server) throws InterruptedException {
+        if (!history.isEmpty()) {
+            var temp = TETile.copyOf(initWorld);
+            person.setPos(startPoint);
+            renderRemote(initWorld, "Replay Mode", server);
+            for (var c : history) {
+                action(initWorld, c);
+                Thread.sleep(500);
+                renderRemote(initWorld, "Replay Mode", server);
+            }
+            isReplay = false;
+            initWorld = TETile.copyOf(temp);
+        }
+    }
+
+    private void waitForInputRemote(TETile[][] world, BYOWServer server) {
+        if (server.clientHasKeyTyped()) {
+            var key = server.clientNextKeyTyped();
+            action(world, key);
         }
     }
 
